@@ -212,6 +212,46 @@ df = delete_outliers(df, outlier_columns)
 
 ### 최종 선정 모델
 ⭐️ XGBoost ⭐️
+```
+import os
+import joblib
+
+# 최적 모델과 하이퍼파라미터 추출
+best_models = {
+    'DecisionTreeClassifier': best_model_tree,
+    'RandomForestClassifier': best_model_rf,
+    'GradientBoostingClassifier': best_model_gb,
+    'XGBClassifier': best_model_xgb
+}
+
+params = {
+    'DecisionTreeClassifier': best_model_tree,
+    'RandomForestClassifier': best_model_rf,
+    'GradientBoostingClassifier': best_model_gb,
+    'XGBClassifier': best_model_xgb
+}
+
+# 모델과 하이퍼파라미터를 하나의 딕셔너리로 묶어서 저장
+model_dict = {
+    'models': best_models,
+    'params': params
+}
+
+import joblib
+
+directory = 'saved/'
+os.makedirs(directory, exist_ok=True)
+
+joblib.dump(model_dict, os.path.join(directory, 'models_and_params.joblib'))
+
+# 저장된 모델과 파라미터 불러오기
+loaded_model_dict = joblib.load('/saved/models_and_params.joblib')
+
+# 모델과 하이퍼파라미터 출력
+print("Loaded Models:", loaded_model_dict['models'])
+print("Loaded Params:", loaded_model_dict['params'])
+```
+
 ### streamlit 결과
 
 ## ✔️ 팀원 회고
