@@ -62,12 +62,15 @@ SKN6기 2nd 단위 프로젝트 - 공인용, 김동명, 박유나, 임연경
 ```
 
 ## 데이터 전처리
+### ✔️ 변수 정의
+![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EB%B3%80%EC%88%98%20%EC%A0%95%EC%9D%98.png)
 ### ✔️ EDA(탐색적 데이터 분석)
+![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/EDA.png)
 ### ✔️ 결측치 처리
 ⭐️ 문자열 형식으로 된 education_level, marital_status, income_category에서 Unknown이라는 결측치 발생 ⭐️
 | education_level | marital_status | income_category |
 |--|--|--|
-|  |  |  |
+| ![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EA%B2%B0%EC%B8%A1%EC%B9%98%20%ED%95%99%EB%B2%8C.png) | ![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EA%B2%B0%EC%B8%A1%EC%B9%98%20%EA%B2%B0%ED%98%BC.png) | ![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EA%B2%B0%EC%B8%A1%EC%B9%98%20%EC%9E%90%EC%82%B0.png) |
 | SimpleImputer(최빈값) | SimpleImputer(최빈값) | 사용자 정의 imputer(가중대체) |
 | unkown의 비율이 나머지에 비에 높지 않음 | unkown의 비율이 나머지에 비에 높지 않음 | unkown의 비율이 나머지에 비에 높음 |
 | Graduate가 가장 많은 비율(30.89%)을 차지 | Married가 가장 높은 비율(46.28%)을 차지 | 각각 나머지 자료의 비율에 따라 랜덤으로 분배 |
@@ -107,7 +110,7 @@ SKN6기 2nd 단위 프로젝트 - 공인용, 김동명, 박유나, 임연경
 
 ### ✔️ 이상치 처리
 
-<image>
+![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/boxplot.png)
 
 
 ```
@@ -186,20 +189,7 @@ df = delete_outliers(df, outlier_columns)
 
 ### 과정
 - 전체적으로 어떤 모델이 적합할지 확인
-   > Logistic Regression model
-   > 
-   > Decision Tree model
-   >
-   > Random Forest model
-   >
-   > Gradient Boosting model
-   >
-   > XGBoost model
-   >
-   > SVM(Support Vector Machine)
-   >
-   > KNN(K-Nearest Neighbors)
-   <image>
+  ![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EB%A8%B8%EC%8B%A0%EB%9F%AC%EB%8B%9D%20%EC%B2%AB%EA%B2%B0%EA%B3%BC.png)
 - 우수 모델 4가지를 선택해 파라미터 설정 등 자세한 분석 시행
   > Decision Tree Classifier : 정확도 93.78%
   >
@@ -211,11 +201,17 @@ df = delete_outliers(df, outlier_columns)
   >
 |머신러닝 방법| Decision Tree Classifier | Random Forest | Gradient Boosting | XGBoost |
 |--|--|--|--|--|
-|Confusion Matrix| <img src="..." alt="image" width="200" height="250"/>| <img src="..." width="200" height="250"/>| <img src="..." alt="image" width="200" height="250"/>|<img src="..." alt="image" width="200" height="250"/>|
-|결과| <img src="..." alt="image" width="200" height="250"/>| <img src="..." width="200" height="250"/>| <img src="..." alt="image" width="200" height="250"/>|<img src="..." alt="image" width="200" height="250"/>|
-|특성중요도| <img src="..." alt="image" width="200" height="250"/>| <img src="..." width="200" height="250"/>| <img src="..." alt="image" width="200" height="250"/>|<img src="..." alt="image" width="200" height="250"/>|
-|하이퍼파라미터|  |  |  |  |
+|Confusion Matrix| <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EA%B2%B0%EC%A0%95%EB%82%98%EB%AC%B4-cm.png" alt="image" width="200" height="200"/>| <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EB%9E%9C%EB%8D%A4%ED%8F%AC%EB%A0%88%EC%8A%A4%ED%8A%B8-cm.png" width="200" height="200"/>| <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/gradient-cm.png" alt="image" width="200" height="200"/>|<img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/XGboost-cm.png" alt="image" width="200" height="200"/>|
+|결과| <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EA%B2%B0%EC%A0%95%EB%82%98%EB%AC%B4-%EA%B2%B0%EA%B3%BC.png" alt="image" width="300" height="150"/>| <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EB%9E%9C%EB%8D%A4%ED%8F%AC%EB%A0%88%EC%8A%A4%ED%8A%B8-%EA%B2%B0%EA%B3%BC.png" width="300" height="150"/>| <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/gradient-%EA%B2%B0%EA%B3%BC.png" alt="image" width="300" height="150"/>|<img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/XGboost-%EA%B2%B0%EA%B3%BC.png" alt="image" width="300" height="150"/>|
+|특성중요도| <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EA%B2%B0%EC%A0%95%EB%82%98%EB%AC%B4-%ED%8A%B9%EC%84%B1%EC%A4%91%EC%9A%94%EB%8F%84.png" alt="image" width="300" height="150"/>| <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EB%9E%9C%EB%8D%A4%ED%8F%AC%EB%A0%88%EC%8A%A4%ED%8A%B8-%ED%8A%B9%EC%84%B1%EC%A4%91%EC%9A%94%EB%8F%84.png" width="300" height="150"/>| <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/gradient-%ED%8A%B9%EC%84%B1%EC%A4%91%EC%9A%94%EB%8F%84.png" alt="image" width="300" height="150"/>|<img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/XGboost-%ED%8A%B9%EC%84%B1%EC%A4%91%EC%9A%94%EB%8F%84.png" alt="image" width="300" height="150"/>|
+|하이퍼파라미터| <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EA%B2%B0%EC%A0%95%EB%82%98%EB%AC%B4-%ED%95%98%EC%9D%B4%ED%8D%BC%ED%8C%8C%EB%9D%BC%EB%AF%B8%ED%84%B0.png" alt="image" width="200" height="160"/> | <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EB%9E%9C%EB%8D%A4%ED%8F%AC%EB%A0%88%EC%8A%A4%ED%8A%B8-%ED%95%98%EC%9D%B4%ED%8D%BC%ED%8C%8C%EB%9D%BC%EB%AF%B8%ED%84%B0.png" alt="image" width="200" height="100"/> | <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/gradient-%ED%95%98%EC%9D%B4%ED%8D%BC%ED%8C%8C%EB%9D%BC%EB%AF%B8%ED%84%B0.png" alt="image" width="200" height="150"/> | <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/XGBoost-%ED%95%98%EC%9D%B4%ED%8D%BC%ED%8C%8C%EB%9D%BC%EB%AF%B8%ED%84%B0.png" alt="image" width="200" height="150"/> |
+
+</br>
+
+![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EC%A0%95%ED%99%95%EB%8F%84.png)
+
 ### 최종 선정 모델
+⭐️ XGBoost ⭐️
 ### streamlit 결과
 
 ## ✔️ 팀원 회고
@@ -230,5 +226,7 @@ df = delete_outliers(df, outlier_columns)
 > 
 >
 임연경
->
-> 
+
+
+
+'colsample_bytree': 1.0 
