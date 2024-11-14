@@ -59,16 +59,162 @@ SKN6기 2nd 단위 프로젝트 - 공인용, 김동명, 박유나, 임연경
 |
 |-- readme.md : readme 파일
 |-- requirements.txt : 설치 모듈 리스트
-
 ```
+
 ## 데이터 전처리
 ### ✔️ EDA(탐색적 데이터 분석)
 ### ✔️ 결측치 처리
+⭐️ 문자열 형식으로 된 education_level, marital_status, income_category에서 Unknown이라는 결측치 발생 ⭐️
+| education_level | marital_status | income_category |
+|--|--|--|
+|  |  |  |
+| SimpleImputer(최빈값) | SimpleImputer(최빈값) | 사용자 정의 imputer(가중대체) |
+| unkown의 비율이 나머지에 비에 높지 않음 | unkown의 비율이 나머지에 비에 높지 않음 | unkown의 비율이 나머지에 비에 높음 |
+| Graduate가 가장 많은 비율(30.89%)을 차지 | Married가 가장 높은 비율(46.28%)을 차지 | 각각 나머지 자료의 비율에 따라 랜덤으로 분배 |
+</br>
+👉🏻 우리가 정의한 imputer
+</br>
+
+
+
+```
+ Class ProportionalImputer(BaseEstimator, TransformerMixin):
+    def __init__(self, columns):
+        self.columns = columns
+        self.fill_values = {}
+
+    def fit(self, X, y=None):
+        for column in self.columns:
+            value_counts = X[column].value_counts(normalize=True)
+            self.fill_values[column] = (value_counts.index, value_counts.values)
+        return self
+
+    def transform(self, X):
+        X = X.copy()
+        for column in self.columns:
+
+            nan_count = X[column].isna().sum()
+            if nan_count > 0:
+                fill_values = np.random.choice(
+                    self.fill_values[column][0], size=nan_count, p=self.fill_values[column][1]
+                )
+                X.loc[X[column].isna(), column] = fill_values
+        return X
+```
+
+
+
+
 ### ✔️ 이상치 처리
+
+<image>
+
+
+```
+def find_outliers(df, column_name, whis=1.5):
+    q1, q3 = df[column_name].quantile(q=[0.25, 0.75])
+    iqr = q3 - q1
+    iqr *= whis
+    return df.loc[~df[column_name].between(q1 - iqr, q3 + iqr)]
+```
+
+
+
+
+</br>
+⭐️ 발생한 여러 이상치들 중 결과에 영향을 거의 미치지 않을 것같은 이상치 삭제 => ["age", "total_trans_cnt"] 두 칼럼의 이상치를 삭제하기로 결정 ⭐️
+</br>
+
+
+
+
+
+```
+def delete_outliers(df, columns, whis=1.5):
+    index_list = []
+    _df = df.copy()
+    
+    for col in columns: 
+        outliers_column_index = find_outliers(df, col, whis=whis)
+        index_list.extend(outliers_column_index.index)
+        
+        
+    _df = _df.drop(index=index_list)
+        
+    _df.reset_index(drop=True, inplace=True)
+    
+    return _df
+
+outlier_columns = ["age", "total_trans_cnt"]
+df = delete_outliers(df, outlier_columns)
+```
+
+
+
+
+
 ### ✔️ Feature Engineering
+⭐️ 문자열 자료들을 숫자형으로 변경하기 위해 진행 ⭐️
+1. 라벨 인코딩(Label Encoding) 
+> 'gender'
+> 
+> 이진 변수의 경우 모델 성능에 큰 차이가 없으므로, 간단히 라벨 인코딩을 사용하기로 함.
+> 
+2. 순서 인코딩 (Ordinal Encoding)
+> 'education_level', 'income_category'
+>
+> 학력과 소득과 관련된 자료는 자료량이 아닌 해당 index로 순서를 결정하기 위함.
+> 
+3. mapping
+> 'churn'
+>
+> 이탈한 고객을 1로 설정하고 이탈하지 않은 고객을 0으로 설정해 자료의 분석을 쉽게할 수 있도록 함.
+> 
+4. 원핫 인코딩(One-Hot encoding)
+> 'marital_status', 'card_category'
+> 
+> 순서가 없고 각 값이 독립적인 범주형 데이터으로서 순서나 크기 정보 없이 각각 독립적인 특성으로 변환되므로, 머신러닝 모델에서 더 잘 해석될 가능성이 있다고 보아 OneHot 인코딩 하기로 결정.
+>
+
 ## 모델 학습 결과서
 ### 모델 평가에 사용된 평가 지표
+- 'id', 'Naive_Bayes_Classifier_Attrition_Flag_Card_Category_Contacts_Count_12_mon_Dependent_count_Education_Level_Months_Inactive_12_mon_1', 'Naive_Bayes_Classifier_Attrition_Flag_Card_Category_Contacts_Count_12_mon_Dependent_count_Education_Level_Months_Inactive_12_mon_2' 을 제외한 다른 지표
+> 'id' : 모든 행들이 가지고 있는 고유의 값으로 평가에는 도움이 되지 않음.
+> 
+> 'Naive_Bayes_Classifier_Attrition_Flag_Card_Category_Contacts_Count_12_mon_Dependent_count_Education_Level_Months_Inactive_12_mon_1', 'Naive_Bayes_Classifier_Attrition_Flag_Card_Category_Contacts_Count_12_mon_Dependent_count_Education_Level_Months_Inactive_12_mon_2' : 이 지표들은 이미 기존 모델에서 계산된 확률 값이므로, 새 모델에 포함시키면 편향이나 과적합을 유발할 수 있음.
+
+
 ### 과정
+- 전체적으로 어떤 모델이 적합할지 확인
+   > Logistic Regression model
+   > 
+   > Decision Tree model
+   >
+   > Random Forest model
+   >
+   > Gradient Boosting model
+   >
+   > XGBoost model
+   >
+   > SVM(Support Vector Machine)
+   >
+   > KNN(K-Nearest Neighbors)
+   <image>
+- 우수 모델 4가지를 선택해 파라미터 설정 등 자세한 분석 시행
+  > Decision Tree Classifier : 정확도 93.78%
+  >
+  > Random Forest : 정확도 95.65%
+  >
+  > Gradient Boosting : 정확도 96.79%
+  >
+  > XGBoost : 정확도 97.19%
+  >
+|머신러닝 방법| Decision Tree Classifier | Random Forest | Gradient Boosting | XGBoost |
+|--|--|--|--|--|
+|Confusion Matrix| <img src="..." alt="image" width="200" height="250"/>| <img src="..." width="200" height="250"/>| <img src="..." alt="image" width="200" height="250"/>|<img src="..." alt="image" width="200" height="250"/>|
+|결과| <img src="..." alt="image" width="200" height="250"/>| <img src="..." width="200" height="250"/>| <img src="..." alt="image" width="200" height="250"/>|<img src="..." alt="image" width="200" height="250"/>|
+|특성중요도| <img src="..." alt="image" width="200" height="250"/>| <img src="..." width="200" height="250"/>| <img src="..." alt="image" width="200" height="250"/>|<img src="..." alt="image" width="200" height="250"/>|
+|하이퍼파라미터|  |  |  |  |
 ### 최종 선정 모델
 ### streamlit 결과
 
