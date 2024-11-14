@@ -1,11 +1,12 @@
 # SKN06-2nd-4Team
 SKN6기 2nd 단위 프로젝트 - 공인용, 김동명, 박유나, 임연경
-## 팀이름
+## 가디언즈 오브 독산
+<img src="https://postfiles.pstatic.net/20140724_24/sound_tel_1406201694894NzGTt_PNG/Screenshot_2014-07-24-20-25-03_edit.png?type=w1" alt="image" width="200" height="300"/>
 
 ### 팀원
 | 공인용 | 김동명 | 박유나 | 임연경 |
 |--|--|--|--|
-| <img src="..." alt="image" width="200" height="200"/>| <img src="..." alt="image" width="200" height="200"/>| <img src="..." alt="image" width="200" height="200"/>|<img src="..." alt="image" width="200" height="200"/>|
+| <img src="https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAxODA0MTFfMTM0%2FMDAxNTIzNDU0NzkwNDE5.gEK35xFgCX9vYBn5oOJyWuh2e5pbuhlSbfdl6poV5uEg.Mv_Dfnxo30cnaT6L6CRO1qnHuhw-w2-IOrbCvdavhJ8g.JPEG.hong5395%2F3e9932eb44c7e5d95e3380f0b3850a10849e64a53fc218b5f937de3f8aa32c7d179cdaa4ff41.jpg&type=sc960_832" alt="image" width="200" height="250"/>| <img src="https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAxNzAzMDVfMTA2%2FMDAxNDg4Njk1MjMzMzM5.n8IyNuI2bfb9ahCzK5BuXarECmC0kAgwXAQ_VqnVfvkg.YVo_NXVr0Yum_arFadeksjm5EK2llgXS7c5_gdAAyk0g.JPEG.herotime01%2Fmms411-r9_shop1_151309.jpg&type=sc960_832" alt="image" width="200" height="250"/>| <img src="https://search.pstatic.net/sunny/?src=https%3A%2F%2Fi.namu.wiki%2Fi%2FHTd0cQVU-2HsObW-meRcGxERbzgr80e3y0K2IkUPVuAtCAQgoN684suvdC3B3vAr6G_lT_XJk4j5k7l-_7sLbg.webp&type=sc960_832" alt="image" width="200" height="250"/>|<img src="https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAxODA1MjVfMTMz%2FMDAxNTI3MTk1NDA2NDY4.52sHvf5xhDFsa547Q0XppzIAaz_LuXEm1vIkHcXev8Ag.dxIsd79lNL_5QekTes5_Agf4EzveLb7L1Ub-EHP738Ag.JPEG.loyh%2FDSC01289.JPG&type=a340" alt="image" width="200" height="250"/>|
 
 </br></br></br>
 
