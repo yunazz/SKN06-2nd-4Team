@@ -63,6 +63,7 @@ SKN6기 2nd 단위 프로젝트 - 공인용, 김동명, 박유나, 임연경
 
 ## 데이터 전처리
 ### ✔️ 변수 정의
+[Google 스프레드시트 보기](https://docs.google.com/spreadsheets/d/1PvMto9SCOenoNsXg_mjzhMyAeArdpVEP5e5ZlOuftFI/edit?usp=sharing)
 
 ### ✔️ EDA(탐색적 데이터 분석)
 ![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/EDA.png)
