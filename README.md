@@ -155,6 +155,7 @@ df = delete_outliers(df, outlier_columns)
 
 ### ✔️ Feature Engineering
 ⭐️ 문자열 자료들을 숫자형으로 변경하기 위해 진행 ⭐️
+⭐️ 각각의 인코딩 방법을 학습하여 따로 .pkl로 저장 ⭐️
 1. 라벨 인코딩(Label Encoding) 
 > 'gender'
 > 
@@ -186,16 +187,413 @@ df = delete_outliers(df, outlier_columns)
 
 ### 과정
 - 전체적으로 어떤 모델이 적합할지 확인
+  ```
+    from tqdm import tqdm
+    
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.ensemble import GradientBoostingClassifier
+    from xgboost import XGBClassifier, plot_importance
+    from sklearn.svm import SVC
+    from sklearn.neighbors import KNeighborsClassifier
+    
+    import matplotlib.pyplot as plt
+    models = { 
+        # Logistic Regression model
+        "Logistic Regression": LogisticRegression(),
+        # Decision Tree model
+        "Decision Tree Classifier": DecisionTreeClassifier(),
+        # Random Forest model
+        "Random Forest": RandomForestClassifier(),
+        # Gradient Boosting model
+        "Gradient Boosting": GradientBoostingClassifier(),
+        # XGBoost model
+        "XGBoost": XGBClassifier(),
+        # SVM(Support Vector Machine)
+        "SVC": SVC(),
+        # KNN(K-Nearest Neighbors)
+        "KNeighborsClassifier": KNeighborsClassifier(),
+    }
+    
+    
+    for name, model in tqdm(models.items(), desc="Training Models", total=len(models)):
+        # 모델 훈련
+        model.fit(X_train, y_train)
+        # 모델 평가
+        score = model.score(X_test, y_test)
+        # 모델 검증
+        model_pred = model.predict(X_test)
+        # 모델 정확도
+        tqdm.write(f">>> {name} : 정확도 {score:.2%}\n")
+
+  ```
+
+
+
+
+
+    
   ![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EB%A8%B8%EC%8B%A0%EB%9F%AC%EB%8B%9D%20%EC%B2%AB%EA%B2%B0%EA%B3%BC.png)
 - 우수 모델 4가지를 선택해 파라미터 설정 등 자세한 분석 시행
-  > Decision Tree Classifier : 정확도 93.78%
-  >
-  > Random Forest : 정확도 95.65%
-  >
-  > Gradient Boosting : 정확도 96.79%
-  >
-  > XGBoost : 정확도 97.19%
-  >
+  ##### Decision Tree Classifier : 정확도 93.78%
+  - 주요 파라미터
+    > criterion: 노드 분할 기준
+    > 
+    > max_depth: 각 결정 트리의 최대 깊이를 설정
+    > 
+    > min_samples_split: 노드를 분할하기 위한 최소 샘플 수
+    > 
+    > min_samples_leaf: 리프 노드의 최소 샘플 수
+    > 
+    > max_features: 각 트리가 학습할 때마다 사용할 특성(feature)의 수
+    
+    ```
+    
+    from sklearn.tree import DecisionTreeClassifier
+    
+    # 1. 학습 및 예측
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    
+    
+    
+    tree = DecisionTreeClassifier()
+    
+    tree.fit(X_train, y_train)
+    
+    # 2. 모델 평가
+    # Train set + Test set 평가
+    y_train_pred_tree = tree.predict(X_train)
+    y_train_proba_tree= tree.predict_proba(X_train)[:, 1]
+    
+    y_test_pred_tree = tree.predict(X_test)
+    y_test_proba_tree= tree.predict_proba(X_test)[:, 1]
+    
+    # 혼동 행렬 시각화 (테스트 데이터)
+    cm_test = confusion_matrix(y_test, y_test_pred_tree)
+    plt.figure(figsize=(6, 4))
+    sns.heatmap(cm_test, annot=True, fmt="d", cmap="Blues", cbar=False)
+    plt.xlabel("예측")
+    plt.ylabel("정답")
+    plt.title("Confusion Matrix - Decision Tree (Test Set)")
+    plt.show()
+     
+    evaluate("Train - Decision Tree", y_train, y_train_pred_tree, y_train_proba_tree)
+    evaluate("Test - Decision Tree", y_test, y_test_pred_tree, y_test_proba_tree)
+    
+    # 3. 특성 중요도 계산 및 시각화
+    fi = tree.feature_importances_
+    fi_series = pd.Series(fi, index=df.drop(columns="churn").columns).sort_values(ascending=False)
+    
+    # 특성 중요도 시각화
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x=fi_series, y=fi_series.index)
+    plt.title("Feature Importances in Decision Tree")
+    plt.xlabel("Importance")
+    plt.ylabel("Feature")
+    plt.show()
+    
+    # 4. 최적의 매개변수 구하기 - GridSearchCV
+    params = {
+        'criterion': ['gini', 'entropy'],  # 노드 분할 기준
+        'max_depth': [None, 10, 20, 30],   # 각 결정 트리의 최대 깊이를 설정
+        'min_samples_split': [2, 10, 20],  # 노드를 분할하기 위한 최소 샘플 수
+        'min_samples_leaf': [1, 5, 10],    # 리프 노드의 최소 샘플 수
+        'max_features': [None, 'sqrt', 'log2']  # 각 트리가 학습할 때마다 사용할 특성(feature)의 수
+    }
+    
+    gs_tree = GridSearchCV(
+        estimator=tree,          
+        param_grid=params,  
+        scoring=scoring,
+        refit='accuracy',
+        cv=5,             
+        n_jobs=-1,         
+    )
+    
+    gs_tree.fit(X_train, y_train)
+    
+    # 5. Best Model: 최적의 하이파라미터로 만든 모델
+    best_param_tree = gs_tree.best_params_
+    best_model_tree = gs_tree.best_estimator_
+    
+    best_y_pred_tree = best_model_tree.predict(X_test)
+    best_y_proba_tree= best_model_tree.predict_proba(X_test)[:, 1]
+    
+    # score 기록 
+    model_box['decision_tree'] = evaluate("Best - Decision Tree", y_test, best_y_pred_tree, best_y_proba_tree)
+    ```
+    
+  ##### Random Forest : 정확도 95.65%
+    
+    - 주요 파라미터
+        > n_estimators: 부스팅 단계의 수 = 모델이 생성할 트리 개수
+        > 
+        > max_depth: 각 결정 트리의 최대 깊이를 설정
+        > 
+        > max_features: 각 트리가 학습할 때마다 사용할 특성(feature)의 수
+        >
+        ```
+        from sklearn.ensemble import RandomForestClassifier
+
+        # 1. 학습 및 예측
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+        
+        rf = RandomForestClassifier()
+        
+        rf.fit(X_train, y_train)
+        
+        # 2. 모델 평가
+        # Train set + Test set 평가
+        y_train_pred_rf = rf.predict(X_train)
+        y_train_proba_rf= rf.predict_proba(X_train)[:, 1]
+        
+        y_test_pred_rf = rf.predict(X_test)
+        y_test_proba_rf= rf.predict_proba(X_test)[:, 1]
+        
+        # 혼동 행렬 시각화 (테스트 데이터)
+        cm_test = confusion_matrix(y_test, y_test_pred_rf)
+        plt.figure(figsize=(6, 4))
+        sns.heatmap(cm_test, annot=True, fmt="d", cmap="Blues", cbar=False)
+        plt.xlabel("예측")
+        plt.ylabel("정답")
+        plt.title("Confusion Matrix - Random Forest (Test Set)")
+        plt.show()
+        
+        evaluate("Train - Random Forest", y_train, y_train_pred_rf, y_train_proba_rf)
+        evaluate("Test - Random Forest", y_test, y_test_pred_rf, y_test_proba_rf)
+        
+        # 3. 특성 중요도 계산 및 시각화
+        fi = rf.feature_importances_
+        fi_series = pd.Series(fi, index=df.drop(columns="churn").columns).sort_values(ascending=False)
+        
+        # 특성 중요도 시각화
+        plt.figure(figsize=(10, 6))
+        sns.barplot(x=fi_series, y=fi_series.index)
+        plt.title("Feature Importances in Random Forest")
+        plt.xlabel("Importance")
+        plt.ylabel("Feature")
+        plt.show()
+        
+        # 4. 최적의 매개변수 구하기 - GridSearchCV
+        params = {
+            'n_estimators': [100, 200, 300],    # 결정 트리(Decision Tree)의 개수
+            'max_depth': [5, 10, 15],           # 각 결정 트리의 최대 깊이를 설정
+            'max_features': ['sqrt', 'log2']    # 각 트리가 학습할 때마다 사용할 특성(feature)의 수
+        }
+        gs_rf = GridSearchCV(
+            estimator=rf,       
+            param_grid=params,     
+            scoring=scoring,
+            refit='accuracy',
+            cv=5,                      
+            n_jobs=-1,             
+        )
+        
+        gs_rf.fit(X_train, y_train)
+        
+        # 5. Best Model: 최적의 하이파라미터로 만든 모델
+        best_param_rf = gs_rf.best_params_
+        best_model_rf = gs_rf.best_estimator_
+        
+        best_y_pred_rf = best_model_rf.predict(X_test)
+        best_y_proba_rf= best_model_rf.predict_proba(X_test)[:, 1]
+        
+        # score 기록 
+        model_box['random_forest'] = evaluate("Best - Random Forest", y_test, best_y_pred_rf, best_y_proba_rf)
+        ```
+  
+
+ 
+  ##### Gradient Boosting : 정확도 96.79%
+
+    
+    
+    - 주요 파라미터
+        > n_estimators: 부스팅 단계의 수 = 모델이 생성할 트리 개수
+        > 
+        > learning_rate: 학습률
+        >
+        > max_depth: 각 결정 트리의 최대 깊이를 설정
+        > 
+        > subsample: 각 트리 학습에 사용되는 샘플의 비율
+        >
+        ```
+        from sklearn.ensemble import GradientBoostingClassifier
+        
+        # 1. 학습 및 예측
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+        
+        gb = GradientBoostingClassifier()
+        
+        gb.fit(X_train, y_train)
+        
+        # 2. 모델 평가
+        # Train set + Test set 평가
+        y_train_pred_gb = gb.predict(X_train)
+        y_train_proba_gb= gb.predict_proba(X_train)[:, 1]
+        
+        y_test_pred_gb = gb.predict(X_test)
+        y_test_proba_gb= gb.predict_proba(X_test)[:, 1]
+        
+        # 혼동 행렬 시각화 (테스트 데이터)
+        cm_test = confusion_matrix(y_test, y_test_pred_gb)
+        plt.figure(figsize=(6,4))
+        sns.heatmap(cm_test, annot=True, fmt="d", cmap="Blues", cbar=False)
+        plt.xlabel("예측")
+        plt.ylabel("정답")
+        plt.title("Confusion Matrix - Gradient Boosting (Test Set)")
+        plt.show()
+        
+        evaluate("Train - Gradient Booting", y_train, y_train_pred_gb, y_train_proba_gb)
+        evaluate("Test - Gradient Booting", y_test, y_test_pred_gb, y_test_proba_gb)
+        
+        # 3. 특성 중요도 계산 및 시각화
+        fi = gb.feature_importances_
+        fi_series = pd.Series(fi, index=df.drop(columns="churn").columns).sort_values(ascending=False)
+        
+        # 특성 중요도 시각화
+        plt.figure(figsize=(10, 6))
+        sns.barplot(x=fi_series, y=fi_series.index)
+        plt.title("Feature Importances in Gradient Boosting")
+        plt.xlabel("Importance")
+        plt.ylabel("Feature")
+        plt.show()
+        
+        # 4. 최적의 매개변수 구하기 - GridSearchCV
+        params = {
+            "n_estimators": [100, 200, 300],  #  부스팅 단계의 수 = 모델이 생성할 트리 개수
+            "learning_rate": [0.1],  # 학습률
+            "max_depth": [1, 2, 3, 4, 5],  # 각 결정 트리의 최대 깊이를 설정
+            "subsample": [0.5, 0.7],  # 샘플링 비율
+        }
+        
+        gs_gb = GridSearchCV(
+            estimator=gb,           
+            param_grid=params,   
+            scoring=scoring,
+            refit='accuracy',
+            cv=5,                  
+            n_jobs=-1,            
+        )
+        
+        gs_gb.fit(X_train, y_train)
+        
+        # 5. Best Model: 최적의 하이파라미터로 만든 모델
+        best_param_gb = gs_gb.best_params_
+        best_model_gb = gs_gb.best_estimator_
+        
+        best_y_pred_gb = best_model_gb.predict(X_test)
+        best_y_proba_gb= best_model_gb.predict_proba(X_test)[:, 1]
+        
+        # score 기록 
+        model_box['gradient_boosting'] = evaluate("Best - Gradient Boosting", y_test, best_y_pred_gb, best_y_proba_gb)
+        ```
+ 
+ 
+
+ 
+ 
+    
+  ##### XGBoost : 정확도 97.19%
+    - 주요 파라미터
+        > max_depth: 각 결정 트리의 최대 깊이를 설정
+        >
+        > learning_rate: 학습률
+        > 
+        > n_estimators: 부스팅 단계의 수 = 모델이 생성할 트리 개수
+        > 
+        > subsample: 각 트리의 훈련에 사용되는 샘플 비율
+        > 
+        > colsample_bytree: 각 트리의 훈련에 사용되는 피처 비율
+        > 
+        > gamma: 노드 분할에 대한 최소 손실 감소
+        > 
+        > reg_alpha: L1 정규화
+        > 
+        > reg_lambda: L2 정규화
+        >
+        ```
+        from xgboost import XGBClassifier
+          
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+        
+        xgb = XGBClassifier()
+        
+        xgb.fit(X_train, y_train)
+        
+        # 2. 모델 평가
+        # Train set + Test set 평가
+        y_train_pred_xgb = xgb.predict(X_train)
+        y_train_proba_xgb= xgb.predict_proba(X_train)[:, 1]
+        
+        y_test_pred_xgb = xgb.predict(X_test)
+        y_test_proba_xgb= xgb.predict_proba(X_test)[:, 1]
+        
+        # 혼동 행렬 시각화 (테스트 데이터)
+        cm_test = confusion_matrix(y_test, y_test_pred_xgb)
+        plt.figure(figsize=(6, 4))
+        sns.heatmap(cm_test, annot=True, fmt="d", cmap="Blues", cbar=False)
+        plt.xlabel("예측")
+        plt.ylabel("정답")
+        plt.title("Confusion Matrix - XGBoost (Test Set)")
+        plt.show()
+        
+        evaluate("Train - XGBoost", y_train, y_train_pred_xgb, y_train_proba_xgb)
+        evaluate("Test - XGBoost", y_test, y_test_pred_xgb, y_test_proba_xgb)
+        
+        # 3. 특성 중요도 계산 및 시각화
+        fi = xgb.feature_importances_
+        fi_series = pd.Series(fi, index=df.drop(columns="churn").columns).sort_values(ascending=False)
+        
+        # 특성 중요도 시각화
+        plt.figure(figsize=(10, 6))
+        sns.barplot(x=fi_series, y=fi_series.index)
+        plt.title("Feature Importances in XGBoost")
+        plt.xlabel("Importance")
+        plt.ylabel("Feature")
+        plt.show()
+        
+        # 4. 최적의 매개변수 구하기 - GridSearchCV
+        params = {
+            "max_depth":[1, 2, 3, 4, 5],            # 각 결정 트리의 최대 깊이를 설정
+            'learning_rate': [0.1],                 # 학습률
+            'n_estimators': [100, 200, 300],        # 부스팅 단계의 수 = 모델이 생성할 트리 개수
+            'subsample': [0.5, 0.7],                # 각 트리의 훈련에 사용되는 샘플 비율
+            'colsample_bytree': [0.5, 0.7, 1.0],    # 각 트리의 훈련에 사용되는 피처 비율
+            'gamma': [0, 0.1],                      # 노드 분할에 대한 최소 손실 감소
+            'reg_alpha': [0],                       # L1 정규화
+            'reg_lambda': [0.1]                     # L2 정규화
+        }
+        gs_xgb = GridSearchCV(
+            estimator=xgb,           
+            param_grid=params,   
+            scoring=scoring,
+            refit='accuracy',
+            cv=5,                  
+            n_jobs=-1,            
+        )
+        
+        gs_xgb.fit(X_train, y_train)
+        
+        # 5. 튜닝 : Best Model 찾기
+        best_param_xgb = gs_xgb.best_params_
+        best_model_xgb = gs_xgb.best_estimator_
+        
+        best_y_pred_xgb = best_model_xgb.predict(X_test)
+        best_y_proba_xgb= best_model_xgb.predict_proba(X_test)[:, 1]
+        
+        # score 기록 
+        model_box['xgboost'] = evaluate("Best - XGBoost", y_test, best_y_pred_xgb, best_y_proba_xgb)
+        ```
+ 
+ 
+ 
+ 
+
+
+
+
 |머신러닝 방법| Decision Tree Classifier | Random Forest | Gradient Boosting | XGBoost |
 |--|--|--|--|--|
 |Confusion Matrix| <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EA%B2%B0%EC%A0%95%EB%82%98%EB%AC%B4-cm.png" alt="image" width="200" height="200"/>| <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EB%9E%9C%EB%8D%A4%ED%8F%AC%EB%A0%88%EC%8A%A4%ED%8A%B8-cm.png" width="200" height="200"/>| <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/gradient-cm.png" alt="image" width="200" height="200"/>|<img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/XGboost-cm.png" alt="image" width="200" height="200"/>|
@@ -204,68 +602,88 @@ df = delete_outliers(df, outlier_columns)
 |하이퍼파라미터| <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EA%B2%B0%EC%A0%95%EB%82%98%EB%AC%B4-%ED%95%98%EC%9D%B4%ED%8D%BC%ED%8C%8C%EB%9D%BC%EB%AF%B8%ED%84%B0.png" alt="image" width="200" height="160"/> | <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EB%9E%9C%EB%8D%A4%ED%8F%AC%EB%A0%88%EC%8A%A4%ED%8A%B8-%ED%95%98%EC%9D%B4%ED%8D%BC%ED%8C%8C%EB%9D%BC%EB%AF%B8%ED%84%B0.png" alt="image" width="200" height="100"/> | <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/gradient-%ED%95%98%EC%9D%B4%ED%8D%BC%ED%8C%8C%EB%9D%BC%EB%AF%B8%ED%84%B0.png" alt="image" width="200" height="150"/> | <img src="https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/XGBoost-%ED%95%98%EC%9D%B4%ED%8D%BC%ED%8C%8C%EB%9D%BC%EB%AF%B8%ED%84%B0.png" alt="image" width="200" height="150"/> |
 
 </br>
+    ```
+    
+    # 여러 평가 지표 설정
+    scoring = {
+        'accuracy': make_scorer(accuracy_score),
+        'precision': make_scorer(precision_score),
+        'recall': make_scorer(recall_score),
+        'f1': make_scorer(f1_score),
+        'auc': make_scorer(roc_auc_score)
+    }
+    
+    model_box = pd.DataFrame(columns=['decision_tree', 'random_forest', 'gradient_boosting', 'xgboost'],
+                             index = ['accuracy','precision','recall','f1 score','auc'])
+    
+    def evaluate(title, y_real, y_pred, y_prob):
+        acc = accuracy_score(y_real, y_pred)
+        pre = precision_score(y_real, y_pred)
+        rec = recall_score(y_real, y_pred)
+        f1 = f1_score(y_real, y_pred)
+        auc = roc_auc_score(y_real, y_prob)
+        
+        print(f"======= {title} =======")
+        print('Accuracy : {:.6f}'.format(acc)) # 정확도 : 예측이 정답과 얼마나 정확한가
+        print('Precision : {:.6f}'.format(pre)) # 정밀도 : 예측한 것 중에서 정답의 비율
+        print('Recall : {:.6f}'.format(rec)) # 재현율 : 정답 중에서 예측한 것의 비율
+        print('F1 score : {:.6f}'.format(f1)) # 정밀도와 재현율의 (조화)평균 - 정밀도와 재현율이 비슷할수록 높은 점수
+        print('auc: {:.6f}'.format(auc))
+        
+        
+        score_list = [acc,pre,rec,f1,auc]
+        score_box = np.array(score_list)
+        
+        return score_box
+    ```
+
+
+
 
 ![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EC%A0%95%ED%99%95%EB%8F%84.png)
 
+
+
 ### 최종 선정 모델
-⭐️ XGBoost ⭐️
+⭐️ 4가지 모델의 최적의 모델 이용 ⭐️
 ```
+
+# 5. 평가
+# Best Model 의 하이퍼파라미터
+print(best_param_tree)
+print(best_param_rf)
+print(best_param_gb)
+print(best_param_xgb)
+
+# Best Model 들의 scoring
+model_box
+# 6. 모델 저장
 import os
 import joblib
 
-# 최적 모델과 하이퍼파라미터 추출
-best_models = {
-    'DecisionTreeClassifier': best_model_tree,
-    'RandomForestClassifier': best_model_rf,
-    'GradientBoostingClassifier': best_model_gb,
-    'XGBClassifier': best_model_xgb
-}
-
-params = {
-    'DecisionTreeClassifier': best_model_tree,
-    'RandomForestClassifier': best_model_rf,
-    'GradientBoostingClassifier': best_model_gb,
-    'XGBClassifier': best_model_xgb
-}
-
-# 모델과 하이퍼파라미터를 하나의 딕셔너리로 묶어서 저장
-model_dict = {
-    'models': best_models,
-    'params': params
-}
-
-import joblib
-
-directory = 'saved/'
+directory = 'model/'
 os.makedirs(directory, exist_ok=True)
 
-joblib.dump(model_dict, os.path.join(directory, 'models_and_params.joblib'))
+joblib.dump(best_model_tree, os.path.join(directory, 'best_tree.pkl'))
+joblib.dump(best_model_rf, os.path.join(directory, 'best_rf.pkl'))
+joblib.dump(best_model_gb, os.path.join(directory, 'best_gb.pkl'))
+joblib.dump(best_model_xgb, os.path.join(directory, 'best_xgb.pkl'))
 
 # 저장된 모델과 파라미터 불러오기
-loaded_model_dict = joblib.load('/saved/models_and_params.joblib')
-
-# 모델과 하이퍼파라미터 출력
-print("Loaded Models:", loaded_model_dict['models'])
-print("Loaded Params:", loaded_model_dict['params'])
+model_tree = joblib.load('model/best_tree.pkl')
+model_rf = joblib.load('model/best_rf.pkl')
+model_gb = joblib.load('model/best_gb.pkl')
+model_xgb = joblib.load('model/best_xgb.pkl')
 ```
 
+
+
 ### streamlit 결과
-
-## ✔️ 팀원 회고
-
-공인용
-> 
-> 
-김동명
-> 
-> 
-박유나
-> 
->
-임연경
+![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EC%8A%A4%ED%8A%B8%EB%A6%BC%EB%A6%BF%20%EC%8B%A4%ED%96%89%20%ED%99%94%EB%A9%B4%201.png)
+![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EC%8A%A4%ED%8A%B8%EB%A6%BC%EB%A6%BF%20%EC%8B%A4%ED%96%89%20%ED%99%94%EB%A9%B4%202.png)
+![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EC%8A%A4%ED%8A%B8%EB%A6%BC%EB%A6%BF%20%EC%8B%A4%ED%96%89%20%ED%99%94%EB%A9%B4%203.png)
 
 ### 추후 계선 사항
-- readme.md 상세 작성
 - 전처리 pipline
 - 예측 후 평가
   
