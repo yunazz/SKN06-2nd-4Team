@@ -268,6 +268,9 @@ print("Loaded Params:", loaded_model_dict['params'])
 >
 임연경
 
-
-
+### 추후 계선 사항
+- readme.md 상세 작성
+- 전처리 pipline
+- 예측 후 평가
+  
 'colsample_bytree': 1.0 
