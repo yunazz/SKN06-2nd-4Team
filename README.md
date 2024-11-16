@@ -42,24 +42,20 @@ SKN6기 2nd 단위 프로젝트 - 공인용, 김동명, 박유나, 임연경
 
 #### ✔️ Requirements
 
+streamlit == 1.39.0
+pymysql == 1.1.1
+pandas == 2.2.3
+openpyxl == 1.1.0
+sqlalchemy == 2.0.35
+configparser == 7.1.0
+matplotlib == 3.9.2
+xlrd == 2.0.1
+seaborn == 0.13.2
+joblib == 1.3.2
+scikit-learn == 1.3.1
+numpy == 1.26.0
+xgboost == 1.7.6
 
-#### ✔️ 폴더트리
-```
-프로젝트
-|-- 1.  
-|    |-- 
-|    |-- 
-| 
-|-- 2. 
-|    |-- 
-|    |--  
-|    |-- 
-| 
-|-- 3. Report : 결과물 폴더
-|
-|-- readme.md : readme 파일
-|-- requirements.txt : 설치 모듈 리스트
-```
 
 ## 데이터 전처리
 ### ✔️ 변수 정의
