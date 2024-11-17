@@ -211,7 +211,7 @@ def __encode_features(self, data):
 
 ### 📌 전처리 Preprocessor 정의
 
-- 결측치 처리, 이상치 처리, Feature Engineering을 실행해주는 클래스 정의 → DataPreprocessor
+- 위의 전처리 과정들을 실행시키는 클래스 정의 → DataPreprocessor
 
 ```python
 class DataPreprocessor:
