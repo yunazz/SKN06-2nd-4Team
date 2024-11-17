@@ -45,8 +45,8 @@ st.markdown(
     .stButton {display: flex;justify-content: center;}
     .stButton button {background-color: #55c9c2;color: white!important;padding: 12px 80px;font-size: 24px;border-radius: 5px;border: none;cursor: pointer;transition: all 0.2s ease;}
     .stButton button:hover {background-color: #4db5ae!important;color: white;}
-    p.final_prediction {font-size: 42px;text-align: center;font-weight: 800;margin-top: 160px;}
-    p.final_prediction.positive::before,p.final_prediction.negative::before {content: "";position: absolute;top: 110px; left: 50%;border-top: 12px solid #ddd; transform: translateX(-50%);text-align: center;width: 100px;    }
+    p.final_prediction {font-size: 42px;text-align: center;font-weight: 800;margin-top: 120px;}
+    p.final_prediction.positive::before,p.final_prediction.negative::before {content: "";position: absolute;top: 80px; left: 50%;border-top: 12px solid #ddd; transform: translateX(-50%);text-align: center;width: 100px;    }
     p.final_prediction.positive::after,p.final_prediction.negative::after {display: block;text-align:center;font-size: 40px;line-height: 50px;}
     p.final_prediction.positive::after {content: "고객 유지";}
     p.final_prediction.negative::after {content: "고객 이탈";}
@@ -166,9 +166,9 @@ if st.button('예측하기'):
     if prediction is not None and prediction_proba is not None:
         # st.markdown('<h2 class="final_prediction" style="text-align: center; margin: 50px 0 0">예측 결과</h2>', unsafe_allow_html=True)
         if final_prediction == 1: 
-            st.markdown('<p class="final_prediction negative" style="font-size: 120px">👋👋👋</p>', unsafe_allow_html=True)
+            st.markdown('<p class="final_prediction negative" style="font-size: 70px">👋👋👋</p>', unsafe_allow_html=True)
         else:
-            st.markdown('<p class="final_prediction positive" style="font-size: 120px">👏👏👏</p>', unsafe_allow_html=True)
+            st.markdown('<p class="final_prediction positive" style="font-size: 70px">👏👏👏</p>', unsafe_allow_html=True)
         
         st.write(f'이탈할 확률: {prediction_proba[0]*100:.2f}%')
     else:
