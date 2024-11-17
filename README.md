@@ -296,6 +296,8 @@ class DataPreprocessor:
 
 데이터와 어울리는 7개의 모델들은 뽑아 어떤 모델이 적합할지 확인해 보기로 했다.
 
+- 평가
+
 ```
   from tqdm import tqdm
 
@@ -338,7 +340,7 @@ class DataPreprocessor:
 
 ```
 
-![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EB%A8%B8%EC%8B%A0%EB%9F%AC%EB%8B%9D%20%EC%B2%AB%EA%B2%B0%EA%B3%BC.png)
+- 결과
 
 ```python
 >>> Logistic Regression : 정확도 87.90%
@@ -456,8 +458,6 @@ class DataPreprocessor:
   best_y_pred_tree = best_model_tree.predict(X_test)
   best_y_proba_tree= best_model_tree.predict_proba(X_test)[:, 1]
 
-  # score 기록
-  model_box['decision_tree'] = evaluate("Best - Decision Tree", y_test, best_y_pred_tree, best_y_proba_tree)
   ```
 
 #### Random Forest : 정확도 95.65%
@@ -536,8 +536,6 @@ class DataPreprocessor:
   best_y_pred_rf = best_model_rf.predict(X_test)
   best_y_proba_rf= best_model_rf.predict_proba(X_test)[:, 1]
 
-  # score 기록
-  model_box['random_forest'] = evaluate("Best - Random Forest", y_test, best_y_pred_rf, best_y_proba_rf)
   ```
 
 #### Gradient Boosting : 정확도 96.79%
@@ -620,8 +618,6 @@ class DataPreprocessor:
   best_y_pred_gb = best_model_gb.predict(X_test)
   best_y_proba_gb= best_model_gb.predict_proba(X_test)[:, 1]
 
-  # score 기록
-  model_box['gradient_boosting'] = evaluate("Best - Gradient Boosting", y_test, best_y_pred_gb, best_y_proba_gb)
   ```
 
 #### XGBoost : 정확도 97.19%
@@ -714,8 +710,6 @@ class DataPreprocessor:
   best_y_pred_xgb = best_model_xgb.predict(X_test)
   best_y_proba_xgb= best_model_xgb.predict_proba(X_test)[:, 1]
 
-  # score 기록
-  model_box['xgboost'] = evaluate("Best - XGBoost", y_test, best_y_pred_xgb, best_y_proba_xgb)
   ```
 
 | 머신러닝 방법    | Decision Tree Classifier                                                                                                                                                                                                                | Random Forest                                                                                                                                                                                                                                             | Gradient Boosting                                                                                                                                                                                           | XGBoost                                                                                                                                                                                                    |
