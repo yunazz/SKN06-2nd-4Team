@@ -95,19 +95,22 @@ xgboost == 1.7.6 <br/>
 
 ### ✔️ 결측치 처리
 
-⭐️ 문자열 형식으로 된 education_level, marital_status, income_category에서 Unknown이라는 결측치 발생 ⭐️
-| education_level | marital_status | income_category |
-|--|--|--|
+⭐️ 3개의 문자열 칼럼에서 'Unknown' 결측치가 발견됐다. 다양한 처리 방법 중 삭제를 고려하기도 했지만, 삭제할 경우 데이터 손실이 많아질 것 같아 **대체** 방법을 선택했다.
+
+| education_level                                                                                                                             | marital_status                                                                                                                              | income_category                                                                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | ![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EA%B2%B0%EC%B8%A1%EC%B9%98%20%ED%95%99%EB%B2%8C.png) | ![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EA%B2%B0%EC%B8%A1%EC%B9%98%20%EA%B2%B0%ED%98%BC.png) | ![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EA%B2%B0%EC%B8%A1%EC%B9%98%20%EC%9E%90%EC%82%B0.png) |
-| SimpleImputer(최빈값) | SimpleImputer(최빈값) | 사용자 정의 imputer(가중대체) |
-| unkown의 비율이 나머지에 비에 높지 않음 | unkown의 비율이 나머지에 비에 높지 않음 | unkown의 비율이 나머지에 비에 높음 |
-| Graduate가 가장 많은 비율(30.89%)을 차지 | Married가 가장 높은 비율(46.28%)을 차지 | 각각 나머지 자료의 비율에 따라 랜덤으로 분배 |
+| SimpleImputer(**최빈값**)                                                                                                                   | SimpleImputer(**최빈값**)                                                                                                                   | 사용자 정의 imputer(**가중대체**)                                                                                                           |
+| unkown의 비율이 나머지에 비에 높지 않음                                                                                                     | unkown의 비율이 나머지에 비에 높지 않음                                                                                                     | unkown의 비율이 나머지에 비에 높음                                                                                                          |
+| Graduate가 가장 많은 비율(30.89%)을 차지                                                                                                    | Married가 가장 높은 비율(46.28%)을 차지                                                                                                     | 각각 나머지 자료의 비율에 따라 랜덤으로 분배                                                                                                |
+
 </br>
-👉🏻 우리가 정의한 imputer
+👉🏻 우리가 '<b>가중대체</b>'를 위해 정의한 Imputer
+</br>
 </br>
 
-```
- Class ProportionalImputer(BaseEstimator, TransformerMixin):
+```python
+class ProportionalImputer(BaseEstimator, TransformerMixin):
     def __init__(self, columns):
         self.columns = columns
         self.fill_values = {}
@@ -134,43 +137,30 @@ xgboost == 1.7.6 <br/>
 ### ✔️ 이상치 처리
 
 ![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/boxplot.png)
-
-```
-def find_outliers(df, column_name, whis=1.5):
-    q1, q3 = df[column_name].quantile(q=[0.25, 0.75])
-    iqr = q3 - q1
-    iqr *= whis
-    return df.loc[~df[column_name].between(q1 - iqr, q3 + iqr)]
-```
-
 </br>
-⭐️ 발생한 여러 이상치들 중 결과에 영향을 거의 미치지 않을 것같은 이상치 삭제 => ["age", "total_trans_cnt"] 두 칼럼의 이상치를 삭제하기로 결정 ⭐️
+⭐️ IQR을 사용해 이상치를 확인한 결과, 일부 이상치로 추정되는 데이터를 발견했다. 그중 ["age", "total_trans_cnt"] 칼럼에서 각각 2개의 극단치 데이터가 결과에 거의 영향을 미치지 않을 것으로 판단되어 삭제하기로 했다.
+</br>
 </br>
 
-```
-def delete_outliers(df, columns, whis=1.5):
-    index_list = []
-    _df = df.copy()
+```python
+def __outlier_feature(self, data, whis=1.5):
+        index_list = []
+        _data = data.copy()
 
-    for col in columns:
-        outliers_column_index = find_outliers(df, col, whis=whis)
-        index_list.extend(outliers_column_index.index)
+        for col in self.__outlier_columns:
+            outliers_column_index = self.__find_outliers(data, col, whis=whis)
+            index_list.extend(outliers_column_index.index)
 
+        _data = _data.drop(index=index_list)
 
-    _df = _df.drop(index=index_list)
+        _data.reset_index(drop=True, inplace=True)
 
-    _df.reset_index(drop=True, inplace=True)
-
-    return _df
-
-outlier_columns = ["age", "total_trans_cnt"]
-df = delete_outliers(df, outlier_columns)
+        return _data
 ```
 
 ### ✔️ Feature Engineering
 
-⭐️ 문자열 자료들을 숫자형으로 변경하기 위해 진행 ⭐️
-⭐️ 각각의 인코딩 방법을 학습하여 따로 .pkl로 저장 ⭐️
+데이터 특징별 선택한 인코딩 방식은 아래와 같다.
 
 1. 라벨 인코딩(Label Encoding)
    > 'gender'
@@ -188,6 +178,109 @@ df = delete_outliers(df, outlier_columns)
    > 'marital_status', 'card_category'
    >
    > 순서가 없고 각 값이 독립적인 범주형 데이터으로서 순서나 크기 정보 없이 각각 독립적인 특성으로 변환되므로, 머신러닝 모델에서 더 잘 해석될 가능성이 있다고 보아 OneHot 인코딩 하기로 결정.
+
+```python
+def __encode_features(self, data):
+        # 1. 라벨 인코딩(Label Encoding) - 'gender'
+        label_encoder = LabelEncoder()
+        data['gender'] = label_encoder.fit_transform(data['gender'])
+
+        # 2. 순서 인코딩 (Ordinal Encoding) - 'education_level', 'income_category'
+        education_order = {"Uneducated": 0, "High School": 1, "College": 2, "Graduate": 3, "Post-Graduate": 4, "Doctorate": 5}
+        data['education_level'] = data['education_level'].map(education_order)
+        income_order = {"Less than $40K" : 0, "$40K - $60K" : 1, "$60K - $80K" : 2,"$80K - $120K" :3, "$120K +":4}
+        data['income_category'] = data['income_category'].map(income_order)
+
+        # 4. 원핫 인코딩(One-Hot encoding) - 'marital_status', 'card_category'
+        columns_to_ohe_encode = ['marital_status', 'card_category']
+        encoded_data_new = self.ohe_encoder.transform(data[columns_to_ohe_encode])
+        encoded_df_new = pd.DataFrame(encoded_data_new, columns=self.ohe_encoder.get_feature_names_out())
+        data = data.drop(columns=columns_to_ohe_encode)
+
+        data = pd.concat([data, encoded_df_new], axis=1)
+
+        return data
+```
+
+#### 📌 전처리(결측치 처리, 이상치 처리, 인코딩)를 위한 클래스 정의 - DataPreprocessor
+
+```python
+class DataPreprocessor:
+    __null_columns_proportional = ['income_category']
+    __null_columns_simple = ['education_level', 'marital_status']
+    __outlier_columns = ["age", "total_trans_cnt"]
+
+    def __init__(self):
+        self.simple_imputer = SimpleImputer(strategy='most_frequent')
+        self.proportional_imputer = ProportionalImputer(columns=self.__null_columns_proportional)
+        self.ohe_encoder = ohe_encoder_loaded
+
+    def __proportional_impute(self, data):
+        self.proportional_imputer.fit(data)
+        return self.proportional_imputer.transform(data)
+
+    def __simple_impute(self, data):
+        data[self.__null_columns_simple] = self.simple_imputer.fit_transform(data[self.__null_columns_simple])
+        return data
+
+    def __find_outliers(self, data, column_name, whis=1.5):
+        q1, q3 = data[column_name].quantile(q=[0.25, 0.75])
+        iqr = q3 - q1
+        iqr *= whis
+        return data.loc[~data[column_name].between(q1 - iqr, q3 + iqr)]
+
+    # Step 1: 결측치 처리
+    def __null_feature(self, data):
+        self.__proportional_impute(data)
+        self.__simple_impute(data)
+
+        return data
+
+    # Step 2: 아웃라이어 처리
+    def __outlier_feature(self, data, whis=1.5):
+        index_list = []
+        _data = data.copy()
+
+        for col in self.__outlier_columns:
+            outliers_column_index = self.__find_outliers(data, col, whis=whis)
+            index_list.extend(outliers_column_index.index)
+
+        _data = _data.drop(index=index_list)
+
+        _data.reset_index(drop=True, inplace=True)
+
+        return _data
+
+    # Step 3: 인코딩
+    def __encode_features(self, data):
+        # 1. 라벨 인코딩(Label Encoding) - 'gender'
+        label_encoder = LabelEncoder()
+        data['gender'] = label_encoder.fit_transform(data['gender'])
+
+        # 2. 순서 인코딩 (Ordinal Encoding) - 'education_level', 'income_category'
+        education_order = {"Uneducated": 0, "High School": 1, "College": 2, "Graduate": 3, "Post-Graduate": 4, "Doctorate": 5}
+        data['education_level'] = data['education_level'].map(education_order)
+        income_order = {"Less than $40K" : 0, "$40K - $60K" : 1, "$60K - $80K" : 2,"$80K - $120K" :3, "$120K +":4}
+        data['income_category'] = data['income_category'].map(income_order)
+
+        # 4. 원핫 인코딩(One-Hot encoding) - 'marital_status', 'card_category'
+        columns_to_ohe_encode = ['marital_status', 'card_category']
+        encoded_data_new = self.ohe_encoder.transform(data[columns_to_ohe_encode])
+        encoded_df_new = pd.DataFrame(encoded_data_new, columns=self.ohe_encoder.get_feature_names_out())
+        data = data.drop(columns=columns_to_ohe_encode)
+
+        data = pd.concat([data, encoded_df_new], axis=1)
+
+        return data
+
+    def preprocess(self, data):
+        data = self.__null_feature(data)
+        data = self.__outlier_feature(data)
+        data = self.__encode_features(data)
+
+        return data
+
+```
 
 ## 모델 학습 결과서
 
