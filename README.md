@@ -766,7 +766,7 @@ def evaluate(title, y_real, y_pred, y_prob):
 
 ## 모델 저장
 
-하이퍼파라미터 튜닝을 통해 각 모델별 best 를 뽑아서 .pkl 파일로 저장.
+하이퍼파라미터 튜닝을 통해 각 모델별 best params 를 통해 만든 best model들을 .pkl 파일로 저장.
 
 ```
 import os
