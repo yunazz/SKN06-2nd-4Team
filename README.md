@@ -789,7 +789,7 @@ model_xgb = joblib.load('model/best_xgb.pkl')
 
 ### streamlit 결과
 
-![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EC%8A%A4%ED%8A%B8%EB%A6%BC%EB%A6%BF%20%EC%8B%A4%ED%96%89%20%ED%99%94%EB%A9%B4%201.png)
+![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EC%8A%A4%ED%8A%B8%EB%A6%BC%EB%A6%BF%20%EC%8B%A4%ED%96%89%20%ED%99%94%EB%A9%B4.png)
 
 ### 추후 계선 사항
 
