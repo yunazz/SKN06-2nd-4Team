@@ -183,6 +183,7 @@ def __outlier_feature(self, data, whis=1.5):
    > 'marital_status', 'card_category'
    >
    > 순서가 없고 각 값이 독립적인 범주형 데이터으로서 순서나 크기 정보 없이 각각 독립적인 특성으로 변환되므로, 머신러닝 모델에서 더 잘 해석될 가능성이 있다고 보아 OneHot 인코딩 하기로 결정.
+   > models/ohe_encoder.pkl 로 저장
 
 <br/>
 
