@@ -53,14 +53,14 @@ st.markdown(
     .custom-button {background-color: #4CAF50;color: white;padding: 10px 20px;font-size: 16px;border-radius: 5px;border: none;cursor: pointer;}
     .custom-button:hover {background-color: #45a049;}
     .stButton {display: flex;justify-content: center;}
-    .stButton button {background-color: #55c9c2;color: white!important;padding: 12px 80px;font-size: 24px;border-radius: 5px;border: none;cursor: pointer;transition: all 0.2s ease;}
+    .stButton button {background-color: #55c9c2;color: white!important;padding: 12px 50px;font-size: 24px;border-radius: 5px;border: none;cursor: pointer;transition: all 0.2s ease;}
     .stButton button:hover {background-color: #4db5ae!important;color: white;}
-    p.final_prediction {font-size: 42px;text-align: center;font-weight: 800;margin-top: 120px;}
-    p.final_prediction.positive::before,p.final_prediction.negative::before {content: "";position: absolute;top: 80px; left: 50%;border-top: 12px solid #ddd; transform: translateX(-50%);text-align: center;width: 100px;    }
+    p.final_prediction {font-size: 42px;text-align: center;font-weight: 800;margin-top: 10px;}
     p.final_prediction.positive::after,p.final_prediction.negative::after {display: block;text-align:center;font-size: 40px;line-height: 50px;}
-    p.final_prediction.positive::after {content: "고객 유지";}
-    p.final_prediction.negative::after {content: "고객 이탈";}
-    #root > div:nth-child(1) > div.withScreencast > div > div > section > div.stMainBlockContainer.block-container.st-emotion-cache-1jicfl2.ea3mdgi5 > div > div > div > div:nth-child(19) > div > div > p {text-align: center;font-size: 20px;}
+    p.final_prediction.positive::after {margin-top: 16px; content: "고객 유지";}
+    p.final_prediction.negative::after {margin-top: 16px; content: "고객 이탈";}
+    #root > div:nth-child(1) > div.withScreencast > div > div > section.stSidebar.st-emotion-cache-vmpjyt.eczjsme18 > div.st-emotion-cache-6qob1r.eczjsme11 > div.st-emotion-cache-1gwvy71.eczjsme12 > div > div > div > div > div:nth-child(5) > div > div > p {display: block; text-align: center; font-size: 16px; margin-bottom: 8px; }
+    #root > div:nth-child(1) > div.withScreencast > div > div > section.stSidebar.st-emotion-cache-vmpjyt.eczjsme18 > div.st-emotion-cache-6qob1r.eczjsme11 > div.st-emotion-cache-1gwvy71.eczjsme12 > div > div > div > div > div:nth-child(6) > div > div > p {font-size: 13px; text-align: center;color: #999}
     </style>
     """,
     unsafe_allow_html=True,
@@ -190,13 +190,13 @@ with col12:
 
 
 # 고객 예측
-st.divider()
-st.markdown(
+# st.divider()
+st.sidebar.markdown(
     '<h3 style="margin-bottom: 0; transform: translateY(10px)">⚙️ 머신 러닝 모델</h2>',
     unsafe_allow_html=True,
 )
 
-model_filter = st.selectbox(
+model_filter = st.sidebar.selectbox(
     "", ["XGBoost", "Gradient Boosting", "Random Forest", "Decision Tree"], index=0
 )
 
@@ -226,7 +226,7 @@ input_data = [
     }
 ]
 
-if st.button("예측하기"):
+if st.sidebar.button("예측하기"):
     processed_columns = [
         "gender",
         "education_level",
@@ -285,16 +285,17 @@ if st.button("예측하기"):
     if prediction is not None and prediction_proba is not None:
         # st.markdown('<h2 class="final_prediction" style="text-align: center; margin: 50px 0 0">예측 결과</h2>', unsafe_allow_html=True)
         if final_prediction == 1:
-            st.markdown(
-                '<p class="final_prediction negative" style="font-size: 70px">👋👋👋</p>',
+            st.sidebar.markdown(
+                '<p class="final_prediction negative" style="font-size: 70px;">😭</p>',
                 unsafe_allow_html=True,
             )
         else:
-            st.markdown(
-                '<p class="final_prediction positive" style="font-size: 70px">👏👏👏</p>',
+            st.sidebar.markdown(
+                '<p class="final_prediction positive" style="font-size: 70px;">🫶</p>',
                 unsafe_allow_html=True,
             )
 
-        st.write(f"이탈할 확률: {prediction_proba[0]*100:.2f}%")
+        st.sidebar.write(f"이탈 확률: {prediction_proba[0]*100:.2f}%")
+        st.sidebar.write("90% 이상일 경우 이탈")
     else:
         st.error("예측을 수행할 수 없습니다. 모델을 확인해주세요.")
