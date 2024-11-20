@@ -57,7 +57,7 @@ xlrd == 2.0.1 <br/>
 seaborn == 0.13.2 <br/>
 joblib == 1.3.2 <br/>
 scikit-learn == 1.3.1 <br/>
-numpy == 1.26.0 <br/>
+numpy == 1.26.4 <br/>
 xgboost == 1.7.6 <br/>
 
 ## 데이터 준비 및 분석
@@ -97,8 +97,51 @@ xgboost == 1.7.6 <br/>
 <br/>
 
 ## 데이터 전처리
-
-### ✔️ 1. 결측치 처리
+### ✔️ 1. 칼럼명 수정 및 소문자화
+```
+rename_columns = {
+        'Attrition_Flag': 'churn',
+        'Customer_Age' : 'age',
+        'Dependent_count' : 'dependent_cnt',
+        'Months_on_book' : 'card_usage_period',
+        'Total_Relationship_Count' : 'account_cnt',
+        'Months_Inactive_12_mon' : 'inactive_month_in_year',
+        'Contacts_Count_12_mon' : 'visit_cnt_in_year',
+        'Total_Revolving_Bal' : 'revolving_balance',
+        'Avg_Open_To_Buy' : 'avg_remain_credit_limit',
+        'Total_Amt_Chng_Q4_Q1' : 'total_amt_change_q4_q1',
+        'Total_Trans_Ct' : 'total_trans_cnt',
+        'Total_Ct_Chng_Q4_Q1' : 'total_cnt_change_q4_q1'
+    }
+data.rename(columns=rename_columns, inplace=True)
+data.columns = data.columns.str.lower()
+```
+### ✔️ 2. 불필요 칼럼 삭제
+> clientnum : 회원번호
+> 
+> naive_bayes_classifier_attrition_flag_card_category_contacts_count_12_mon_dependent_count_education_level_months_inactive_12_mon_1
+>
+> naive_bayes_classifier_attrition_flag_card_category_contacts_count_12_mon_dependent_count_education_level_months_inactive_12_mon_2
+> 
+```
+data = data.drop(
+    columns=[
+        'clientnum',
+        'naive_bayes_classifier_attrition_flag_card_category_contacts_count_12_mon_dependent_count_education_level_months_inactive_12_mon_1',
+        'naive_bayes_classifier_attrition_flag_card_category_contacts_count_12_mon_dependent_count_education_level_months_inactive_12_mon_2'
+    ], 
+    inplace=True
+)
+```
+### ✔️ 3. 결과값 'churn' mapping
+> Existing Customer: 0
+>
+> Attrited Customer: 1 (이탈)
+>
+```
+data['churn'] = data['churn'].map({"Existing Customer": 0, "Attrited Customer": 1})
+```
+### ✔️ 4. 결측치 처리
 
 ⭐️ 3개의 문자열 칼럼에서 'Unknown' 결측치가 발견됐다. 다양한 처리 방법 중 삭제를 고려하기도 했지만, 삭제할 경우 데이터 손실이 많아질 것 같아 **대체** 방법을 선택했다.
 
@@ -139,159 +182,358 @@ class ProportionalImputer(BaseEstimator, TransformerMixin):
         return X
 ```
 
-### ✔️ 2. 이상치 처리
+### ✔️ 5. 이상치 확인 및 각 이상치 처리
 
+#### 이상치 확인
 ![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/boxplot.png)
 </br>
-⭐️ IQR을 사용해 이상치를 확인한 결과, 일부 이상치로 추정되는 데이터를 발견했다. 그중 ["age", "total_trans_cnt"] 칼럼에서 각각 2개의 극단치 데이터가 결과에 거의 영향을 미치지 않을 것으로 판단되어 삭제하기로 했다.
-</br>
-</br>
 
-```python
-def __outlier_feature(self, data, whis=1.5):
-        index_list = []
-        _data = data.copy()
-
-        for col in self.__outlier_columns:
-            outliers_column_index = self.__find_outliers(data, col, whis=whis)
-            index_list.extend(outliers_column_index.index)
-
-        _data = _data.drop(index=index_list)
-
-        _data.reset_index(drop=True, inplace=True)
-
-        return _data
+```
+def get_normal_range(data, whis=1.5):
+    """
+    IQR 기반으로 정상범위 조회 메소드
+    parameter1
+        data: 조회할 대상 데이터
+        whis: IQR에 몇배를 극단치 계산에 사용할 지 비율. rate를 크게하면 outlier범위를 넓게 잡는다. 작게 주면 범위를 좁게 잡는다.
+    return
+        tuple: (lower_bound, upper_bound) - 정상범위의 하한값과 상한값
+    """
+    q1 = np.nanquantile(data, q=0.25)
+    q3 = np.nanquantile(data, q=0.75)
+    IQR = q3 - q1
+    lower_bound = q1 - IQR * whis
+    upper_bound = q3 + IQR * whis
+    return lower_bound, upper_bound
 ```
 
-### ✔️ 3. Feature Engineering
+#### ① age
+> 나이
+>
+> 정상범위의 최대값으로 대체한다.
+>
+>    - 정상 범위를 넘어간 값들의 개수가 많지 않으므로 같은 값으로 변경해서 하나의 값으로 만든다.
 
-데이터 특징별 인코딩 방식은 아래와 같다. - 4가지 방법으로 적용
+```
+data['total_trans_cnt'].describe()
+data['total_trans_cnt'].plot(kind='hist', bins=10)
+low, high = get_normal_range(data['total_trans_cnt'], whis=1.5)
+print(low, high)
+data.query('total_trans_cnt > @high').shape
+```
+</br>
 
-1. 라벨 인코딩(Label Encoding)
+#### ② total_trans_cnt
+> 총 거래 횟수
+>
+> 정상범위의 최대값으로 대체한다.
+>
+> - 정상 범위를 넘어간 값들의 개수가 많지 않으므로 같은 값으로 변경해서 하나의 값으로 만든다.
+
+```
+np.round(data['total_trans_cnt'].describe(), 2)
+data['total_trans_cnt'].plot(kind='hist', bins=10)
+low, high = get_normal_range(data['total_trans_cnt'], whis=1.5)
+print(low, high)
+data.query('total_trans_cnt > @high').shape
+```
+
+⭐️ IQR을 사용해 이상치를 확인한 결과, 일부 이상치로 추정되는 데이터를 발견했다. 그중 ["age", "total_trans_cnt"] 칼럼에서 각각 2개의 극단치 데이터가 결과에 거의 영향을 미치지 않을 것으로 판단되어 정상범위의 최대 값으로 대체했다.
+</br>
+</br>
+
+
+### ✔️ 6. Feature Engineering
+
+데이터 특징별 인코딩 방식은 아래와 같다. - 3가지 방법으로 적용
+
+① 라벨 인코딩(Label Encoding)
    > 'gender'
    >
    > 이진 변수의 경우 모델 성능에 큰 차이가 없으므로, 간단히 라벨 인코딩을 사용하기로 함.
-2. 순서 인코딩 (Ordinal Encoding)
+   > 
+
+② 순서 인코딩 (Ordinal Encoding)
    > 'education_level', 'income_category'
    >
    > 학력과 소득과 관련된 자료는 자료량이 아닌 해당 index로 순서를 결정하기 위함.
-3. mapping
-   > 'churn'
    >
-   > 이탈한 고객을 1로 설정하고 이탈하지 않은 고객을 0으로 설정해 자료의 분석을 쉽게할 수 있도록 함.
-4. 원핫 인코딩(One-Hot encoding)
+
+③ 원핫 인코딩(One-Hot encoding)
    > 'marital_status', 'card_category'
    >
    > 순서가 없고 각 값이 독립적인 범주형 데이터으로서 순서나 크기 정보 없이 각각 독립적인 특성으로 변환되므로, 머신러닝 모델에서 더 잘 해석될 가능성이 있다고 보아 OneHot 인코딩 하기로 결정.
+   >
    > models/ohe_encoder.pkl 로 저장
+   > 
 
 <br/>
 
 ```python
-def __encode_features(self, data):
-        # 1. 라벨 인코딩(Label Encoding) - 'gender'
-        label_encoder = LabelEncoder()
-        data['gender'] = label_encoder.fit_transform(data['gender'])
-
-        # 2. 순서 인코딩 (Ordinal Encoding) - 'education_level', 'income_category'
-        education_order = {"Uneducated": 0, "High School": 1, "College": 2, "Graduate": 3, "Post-Graduate": 4, "Doctorate": 5}
-        data['education_level'] = data['education_level'].map(education_order)
-        income_order = {"Less than $40K" : 0, "$40K - $60K" : 1, "$60K - $80K" : 2,"$80K - $120K" :3, "$120K +":4}
-        data['income_category'] = data['income_category'].map(income_order)
-
-        # 4. 원핫 인코딩(One-Hot encoding) - 'marital_status', 'card_category'
-        columns_to_ohe_encode = ['marital_status', 'card_category']
-        encoded_data_new = self.ohe_encoder.transform(data[columns_to_ohe_encode])
-        encoded_df_new = pd.DataFrame(encoded_data_new, columns=self.ohe_encoder.get_feature_names_out())
-        data = data.drop(columns=columns_to_ohe_encode)
-
-        data = pd.concat([data, encoded_df_new], axis=1)
-
-        return data
-```
-
-### 📌 전처리 Preprocessor 정의
-
-- 위의 전처리 과정들을 실행시키는 클래스 정의 → DataPreprocessor
-
-```python
-class DataPreprocessor:
-    __null_columns_proportional = ['income_category']
-    __null_columns_simple = ['education_level', 'marital_status']
-    __outlier_columns = ["age", "total_trans_cnt"]
-
+class LabelEncoderTransformer(BaseEstimator, TransformerMixin):
     def __init__(self):
-        self.simple_imputer = SimpleImputer(strategy='most_frequent')
-        self.proportional_imputer = ProportionalImputer(columns=self.__null_columns_proportional)
-        self.ohe_encoder = ohe_encoder_loaded
+        self.encoder = LabelEncoder()
 
-    def __proportional_impute(self, data):
-        self.proportional_imputer.fit(data)
-        return self.proportional_imputer.transform(data)
+    def fit(self, X, y=None):
+        self.encoder.fit(X)
+        return self
 
-    def __simple_impute(self, data):
-        data[self.__null_columns_simple] = self.simple_imputer.fit_transform(data[self.__null_columns_simple])
-        return data
+    def transform(self, X):
+        return self.encoder.transform(X).reshape(-1, 1)  # 1D 배열을 2D로 변환하여 반환
 
-    def __find_outliers(self, data, column_name, whis=1.5):
-        q1, q3 = data[column_name].quantile(q=[0.25, 0.75])
-        iqr = q3 - q1
-        iqr *= whis
-        return data.loc[~data[column_name].between(q1 - iqr, q3 + iqr)]
 
-    # Step 1: 결측치 처리
-    def __null_feature(self, data):
-        self.__proportional_impute(data)
-        self.__simple_impute(data)
+class OrdinalEncoderTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self, categories=[]):
+        print(categories)
+        self.encoder = OrdinalEncoder(categories=categories)
 
-        return data
+    def fit(self, X, y=None):
+        self.encoder.fit(X)
+        return self
 
-    # Step 2: 아웃라이어 처리
-    def __outlier_feature(self, data, whis=1.5):
-        index_list = []
-        _data = data.copy()
+    def transform(self, X):
+        return self.encoder.transform(X)  
+```
+⭐️ 위와 같이 클래스를 만들고 파이프라인을 구성
+```
+education_categories = [["Uneducated", "High School", "College", "Graduate", "Post-Graduate", "Doctorate"]]
+income_categories = [['Less than $40K', '$120K +', '$40K - $60K', '$60K - $80K', '$80K - $120K']]
 
-        for col in self.__outlier_columns:
-            outliers_column_index = self.__find_outliers(data, col, whis=whis)
-            index_list.extend(outliers_column_index.index)
-
-        _data = _data.drop(index=index_list)
-
-        _data.reset_index(drop=True, inplace=True)
-
-        return _data
-
-    # Step 3: 인코딩
-    def __encode_features(self, data):
-        # 1. 라벨 인코딩(Label Encoding) - 'gender'
-        label_encoder = LabelEncoder()
-        data['gender'] = label_encoder.fit_transform(data['gender'])
-
-        # 2. 순서 인코딩 (Ordinal Encoding) - 'education_level', 'income_category'
-        education_order = {"Uneducated": 0, "High School": 1, "College": 2, "Graduate": 3, "Post-Graduate": 4, "Doctorate": 5}
-        data['education_level'] = data['education_level'].map(education_order)
-        income_order = {"Less than $40K" : 0, "$40K - $60K" : 1, "$60K - $80K" : 2,"$80K - $120K" :3, "$120K +":4}
-        data['income_category'] = data['income_category'].map(income_order)
-
-        # 4. 원핫 인코딩(One-Hot encoding) - 'marital_status', 'card_category'
-        columns_to_ohe_encode = ['marital_status', 'card_category']
-        encoded_data_new = self.ohe_encoder.transform(data[columns_to_ohe_encode])
-        encoded_df_new = pd.DataFrame(encoded_data_new, columns=self.ohe_encoder.get_feature_names_out())
-        data = data.drop(columns=columns_to_ohe_encode)
-
-        data = pd.concat([data, encoded_df_new], axis=1)
-
-        return data
-
-    def preprocess(self, data):
-        data = self.__null_feature(data)
-        data = self.__outlier_feature(data)
-        data = self.__encode_features(data)
-
-        return data
+encoder = ColumnTransformer(
+    [
+        ('gender_encoder', LabelEncoderTransformer(), [5]), # gender
+        ('education_encoder', OrdinalEncoder(categories=education_categories), [3]), # education_level
+        ('income_encoder', OrdinalEncoder(categories=income_categories), [2]), # income_category
+        ('marital_encoder', OneHotEncoder(sparse_output=False, handle_unknown='ignore'), [4]), # marital_status
+        ('card_encoder', OneHotEncoder(sparse_output=False, handle_unknown='ignore'), [7]) # card_category
+    ], remainder='passthrough'
+)
 
 ```
+### 📌 전처리 정리
+> 결측치 처리
+> 
+> - income_category: 비율에 따른 대치
+> - education_level, marital_status: 최빈값으로 대체
+>
+> 이상치 처리
+> - age, total_trans_ct : 정상범위의 최대 값으로 대체
+>
+> encoding
+> - gender : 라벨 인코딩(Label Encoding)
+> - education_level : 순서 인코딩 (Ordinal Encoding)
+> - marital_status, card_category : 원핫 인코딩(One-Hot encoding)
 
+### ✔️ DataLoad 함수
+```
+%%writefile dataloader.py
+
+import pandas as pd
+
+def load_dataset():
+    # 데이터 load
+    data = pd.read_csv("data/credit_card_churn.csv", na_values="Unknown")
+
+    # 컬럼명 변경
+    rename_columns = {
+        "Attrition_Flag": "churn",
+        "Customer_Age": "age",
+        "Dependent_count": "dependent_cnt",
+        "Months_on_book": "card_usage_period",
+        "Total_Relationship_Count": "account_cnt",
+        "Months_Inactive_12_mon": "inactive_month_in_year",
+        "Contacts_Count_12_mon": "visit_cnt_in_year",
+        "Total_Revolving_Bal": "revolving_balance",
+        "Avg_Open_To_Buy": "avg_remain_credit_limit",
+        "Total_Amt_Chng_Q4_Q1": "total_amt_change_q4_q1",
+        "Total_Trans_Ct": "total_trans_cnt",
+        "Total_Ct_Chng_Q4_Q1": "total_cnt_change_q4_q1",
+    }
+    data.rename(columns=rename_columns, inplace=True)
+    # 컬럼명 소문자로 변경
+    data.columns = data.columns.str.lower()
+
+    ## 컬럼 삭제
+    data.drop(
+        columns=[
+            "clientnum",
+            "naive_bayes_classifier_attrition_flag_card_category_contacts_count_12_mon_dependent_count_education_level_months_inactive_12_mon_1",
+            "naive_bayes_classifier_attrition_flag_card_category_contacts_count_12_mon_dependent_count_education_level_months_inactive_12_mon_2",
+        ],
+        inplace=True,
+    )
+
+    X = data.drop(columns="churn")
+    y = data["churn"]
+    y = data['churn'].map({"Existing Customer": 0, "Attrited Customer": 1})
+    
+
+    return X, y
+```
+### ✔️ 전처리 파이프라인 생성
+#### 사용자 전처리기 생성
+>fit() 은 입력받은 데이터 X 와 y 를 사용해 변환할 때 사용할 값을 찾아 self 에 attribute로 저장한다.
+>
+>transform() 은 fit() 에서 찾은 값으로 변환한다.
+```
+%%writefile preprocessing.py
+
+import pandas as pd
+import numpy as np
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, OrdinalEncoder
+
+# 이상치 처리
+# age, total_trans_coun 전처리에 적용할 transformer 클래스
+## - 정상범위 최대값, 최소값으로 대체
+
+class OutlierTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self, whis=1.5):
+        self.whis = whis
+    
+    def fit(self, X, y=None):
+        q1 = np.nanquantile(X, q=0.25)
+        q3 = np.nanquantile(X, q=0.75)
+        IQR = q3 - q1
+        self.lower_bound = q1 - IQR * self.whis
+        self.upper_bound = q3 + IQR * self.whis
+        return self
+    
+    def transform(self, X, y=None):
+        X_transformed = np.where(X < self.lower_bound, self.lower_bound, X)
+        X_transformed = np.where(X_transformed > self.upper_bound, self.upper_bound, X_transformed)
+        return X_transformed
+
+
+# 결측치 처리
+class ProportionalImputer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self.proportions = {}
+    
+    def fit(self, X, y=None):
+        # 각 열의 비율을 계산하여 저장
+        for column in X.columns:
+            counts = X[column].value_counts(normalize=True, dropna=True)
+            self.proportions[column] = counts
+        return self
+    
+    def transform(self, X):
+        X = X.copy()
+        for column, probs in self.proportions.items():
+            # 결측치 위치 찾기
+            missing_mask = X[column].isna()
+            if missing_mask.any():
+                # 비율에 따라 랜덤하게 값 채우기
+                X.loc[missing_mask, column] = np.random.choice(
+                    probs.index, size=missing_mask.sum(), p=probs.values
+                )
+        return X 
+    
+class LabelEncoderTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self.encoder = LabelEncoder()
+
+    def fit(self, X, y=None):
+        self.encoder.fit(X)
+        return self
+
+    def transform(self, X):
+        return self.encoder.transform(X).reshape(-1, 1)  # 1D 배열을 2D로 변환하여 반환
+
+
+class OrdinalEncoderTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self, categories=[]):
+        print(categories)
+        self.encoder = OrdinalEncoder(categories=categories)
+
+    def fit(self, X, y=None):
+        self.encoder.fit(X)
+        return self
+
+    def transform(self, X):
+        return self.encoder.transform(X) 
+```
+#### 파이프라인 구성
+```
+from preprocessing import  OutlierTransformer, ProportionalImputer, LabelEncoderTransformer, OrdinalEncoderTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, OrdinalEncoder
+
+
+
+# Pipeline을 이용한 전처리
+nullvalue_transformer = ColumnTransformer(
+    [
+        ('income_imputer', ProportionalImputer(), [5]), # income_category
+        ('education_imputer', SimpleImputer(strategy='most_frequent'), [3, 4]), # education_level, marital_status
+        # ('marital_imputer', SimpleImputer(strategy='most_frequent'), [4]) # marital_status
+    ], remainder='passthrough'
+)
+
+outlier_transformer = ColumnTransformer(
+    [
+        ('age_outlier', OutlierTransformer(), [3]), # age
+        ('total_trans_outlier', OutlierTransformer(), [16]) # total_trans_cnt
+    ], remainder='passthrough'
+)
+education_categories = [["Uneducated", "High School", "College", "Graduate", "Post-Graduate", "Doctorate"]]
+income_categories = [['Less than $40K', '$120K +', '$40K - $60K', '$60K - $80K', '$80K - $120K']]
+
+encoder = ColumnTransformer(
+    [
+        ('gender_encoder', LabelEncoderTransformer(), [5]), # gender
+        ('education_encoder', OrdinalEncoder(categories=education_categories), [3]), # education_level
+        ('income_encoder', OrdinalEncoder(categories=income_categories), [2]), # income_category
+        ('marital_encoder', OneHotEncoder(sparse_output=False, handle_unknown='ignore'), [4]), # marital_status
+        ('card_encoder', OneHotEncoder(sparse_output=False, handle_unknown='ignore'), [7]) # card_category
+    ], remainder='passthrough'
+)
+
+preprocessor_pipeline = Pipeline([
+    ("imputer", nullvalue_transformer),
+    ("outlier", outlier_transformer),
+    ("encoding", encoder),
+], verbose=True)
+```
+#### 데이터셋 준비
+```
+from dataloader import load_dataset
+from sklearn.model_selection import train_test_split
+
+import pandas as pd
+import numpy as np
+
+# X, y 분리
+X, y = load_dataset()
+
+# Train/Test/Validation set 나누기.
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=0)
+# X_train, X_valid, y_train, y_valid = train_test_split(X_train, y_train, test_size=0.25, stratify=y_train, random_state=0)
+
+print(X_train.shape, X_test.shape,y_train.shape, y_test.shape,)
+# 비율 확인
+print(np.unique(y, return_counts=True)[1]/y.size)
+print(np.unique(y_train, return_counts=True)[1]/y_train.size)
+print(np.unique(y_test, return_counts=True)[1]/y_test.size)
+print(np.unique(y_valid, return_counts=True)[1]/y_valid.size)
+# X_train_preprocessed = preprocessor_pipeline.transform(X_train)
+# X_test_preprocessed = preprocessor_pipeline.transform(X_test)
+
+print(X_train_preprocessed.shape)
+```
+#### 전처리 파이프라인 저장
+```
+import joblib
+import os
+
+os.makedirs('models', exist_ok=True)
+joblib.dump(
+    preprocessor_pipeline,     # 저장할 모델/전처리기
+    "models/preprocessor.pkl"  # 저장경로. pickle로 저장된다.
+)
+```
 ## 모델링
 
 ### ✔️ 모델 선정하기
