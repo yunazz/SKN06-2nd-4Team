@@ -1,5 +1,5 @@
-import pandas as pd
 
+import pandas as pd
 
 def load_dataset():
     # 데이터 load
@@ -36,5 +36,7 @@ def load_dataset():
 
     X = data.drop(columns="churn")
     y = data["churn"]
+    y = data['churn'].map({"Existing Customer": 0, "Attrited Customer": 1})
+    
 
     return X, y

@@ -1,131 +1,77 @@
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
-from sklearn.impute import SimpleImputer
-from sklearn.base import BaseEstimator, TransformerMixin
+
 import pandas as pd
 import numpy as np
-import joblib
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, OrdinalEncoder
 
-ohe_encoder_loaded = joblib.load("models/ohe_encoder.pkl")
+# 이상치 처리
+# age, total_trans_coun 전처리에 적용할 transformer 클래스
+## - 정상범위 최대값, 최소값으로 대체
+
+class OutlierTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self, whis=1.5):
+        self.whis = whis
+    
+    def fit(self, X, y=None):
+        q1 = np.nanquantile(X, q=0.25)
+        q3 = np.nanquantile(X, q=0.75)
+        IQR = q3 - q1
+        self.lower_bound = q1 - IQR * self.whis
+        self.upper_bound = q3 + IQR * self.whis
+        return self
+    
+    def transform(self, X, y=None):
+        X_transformed = np.where(X < self.lower_bound, self.lower_bound, X)
+        X_transformed = np.where(X_transformed > self.upper_bound, self.upper_bound, X_transformed)
+        return X_transformed
 
 
-# ProportionalImputer - 사용자 정의 imputer
+# 결측치 처리
 class ProportionalImputer(BaseEstimator, TransformerMixin):
-    def __init__(self, columns):
-        self.columns = columns
-        self.fill_values = {}
+    def __init__(self):
+        self.proportions = {}
+    
+    def fit(self, X, y=None):
+        # 각 열의 비율을 계산하여 저장
+        for column in X.columns:
+            counts = X[column].value_counts(normalize=True, dropna=True)
+            self.proportions[column] = counts
+        return self
+    
+    def transform(self, X):
+        X = X.copy()
+        for column, probs in self.proportions.items():
+            # 결측치 위치 찾기
+            missing_mask = X[column].isna()
+            if missing_mask.any():
+                # 비율에 따라 랜덤하게 값 채우기
+                X.loc[missing_mask, column] = np.random.choice(
+                    probs.index, size=missing_mask.sum(), p=probs.values
+                )
+        return X 
+    
+class LabelEncoderTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self.encoder = LabelEncoder()
 
     def fit(self, X, y=None):
-        for column in self.columns:
-            value_counts = X[column].value_counts(normalize=True)
-            self.fill_values[column] = (value_counts.index, value_counts.values)
+        self.encoder.fit(X)
         return self
 
     def transform(self, X):
-        X = X.copy()
-        for column in self.columns:
-
-            nan_count = X[column].isna().sum()
-            if nan_count > 0:
-                fill_values = np.random.choice(
-                    self.fill_values[column][0],
-                    size=nan_count,
-                    p=self.fill_values[column][1],
-                )
-                X.loc[X[column].isna(), column] = fill_values
-        return X
+        return self.encoder.transform(X).reshape(-1, 1)  # 1D 배열을 2D로 변환하여 반환
 
 
-# 예: 인코딩 및 스케일링을 포함한 전처리 클래스
-class DataPreprocessor:
-    __null_columns_proportional = ["income_category"]
-    __null_columns_simple = ["education_level", "marital_status"]
-    __outlier_columns = ["age", "total_trans_cnt"]
+class OrdinalEncoderTransformer(BaseEstimator, TransformerMixin):
+    def __init__(self, categories=[]):
+        print(categories)
+        self.encoder = OrdinalEncoder(categories=categories)
 
-    def __init__(self):
-        self.simple_imputer = SimpleImputer(strategy="most_frequent")
-        self.proportional_imputer = ProportionalImputer(
-            columns=self.__null_columns_proportional
-        )
-        self.ohe_encoder = ohe_encoder_loaded
+    def fit(self, X, y=None):
+        self.encoder.fit(X)
+        return self
 
-    def __proportional_impute(self, data):
-        self.proportional_imputer.fit(data)
-        return self.proportional_imputer.transform(data)
-
-    def __simple_impute(self, data):
-        data[self.__null_columns_simple] = self.simple_imputer.fit_transform(
-            data[self.__null_columns_simple]
-        )
-        return data
-
-    def __find_outliers(self, data, column_name, whis=1.5):
-        q1, q3 = data[column_name].quantile(q=[0.25, 0.75])
-        iqr = q3 - q1
-        iqr *= whis
-        return data.loc[~data[column_name].between(q1 - iqr, q3 + iqr)]
-
-    # Step 1: 결측치 처리
-    def __null_feature(self, data):
-        self.__proportional_impute(data)
-        self.__simple_impute(data)
-
-        return data
-
-    # Step 2: 아웃라이어 처리
-    def __outlier_feature(self, data, whis=1.5):
-        index_list = []
-        _data = data.copy()
-
-        for col in self.__outlier_columns:
-            outliers_column_index = self.__find_outliers(data, col, whis=whis)
-            index_list.extend(outliers_column_index.index)
-
-        _data = _data.drop(index=index_list)
-
-        _data.reset_index(drop=True, inplace=True)
-
-        return _data
-
-    # Step 3: 인코딩
-    def __encode_features(self, data):
-        # 1. 라벨 인코딩(Label Encoding) - 'gender'
-        label_encoder = LabelEncoder()
-        data["gender"] = label_encoder.fit_transform(data["gender"])
-
-        # 2. 순서 인코딩 (Ordinal Encoding) - 'education_level', 'income_category'
-        education_order = {
-            "Uneducated": 0,
-            "High School": 1,
-            "College": 2,
-            "Graduate": 3,
-            "Post-Graduate": 4,
-            "Doctorate": 5,
-        }
-        data["education_level"] = data["education_level"].map(education_order)
-        income_order = {
-            "Less than $40K": 0,
-            "$40K - $60K": 1,
-            "$60K - $80K": 2,
-            "$80K - $120K": 3,
-            "$120K +": 4,
-        }
-        data["income_category"] = data["income_category"].map(income_order)
-
-        # 4. 원핫 인코딩(One-Hot encoding) - 'marital_status', 'card_category'
-        columns_to_ohe_encode = ["marital_status", "card_category"]
-        encoded_data_new = self.ohe_encoder.transform(data[columns_to_ohe_encode])
-        encoded_df_new = pd.DataFrame(
-            encoded_data_new, columns=self.ohe_encoder.get_feature_names_out()
-        )
-        data = data.drop(columns=columns_to_ohe_encode)
-
-        data = pd.concat([data, encoded_df_new], axis=1)
-
-        return data
-
-    def preprocess(self, data):
-        data = self.__null_feature(data)
-        data = self.__outlier_feature(data)
-        data = self.__encode_features(data)
-
-        return data
+    def transform(self, X):
+        return self.encoder.transform(X)  
+    
+    

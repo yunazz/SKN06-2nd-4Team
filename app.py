@@ -1,5 +1,3 @@
-from preprocessing import DataPreprocessor
-from dataloader import load_dataset
 import joblib
 import numpy as np
 import pandas as pd
@@ -31,6 +29,12 @@ def load_model_xgb():
     return joblib.load("models/best_xgb.pkl")
 
 
+@st.cache_resource
+def load_preprocessor():
+    sys.path.append(os.getcwd())
+    return joblib.load("models/preprocessor.pkl")
+
+
 # 모델 로드
 model_tree = load_model_tree()
 model_rf = load_model_rf()
@@ -38,7 +42,7 @@ model_gb = load_model_gb()
 model_xgb = load_model_xgb()
 
 # 전처리기 로드
-preprocessor = DataPreprocessor()
+preprocessor = load_preprocessor()
 
 
 # Front-End 코드
@@ -196,33 +200,63 @@ model_filter = st.selectbox(
     "", ["XGBoost", "Gradient Boosting", "Random Forest", "Decision Tree"], index=0
 )
 
+
 # 예측 버튼
-input_data = {
-    "age": age,
-    "gender": gender,
-    "dependent_cnt": dependent_cnt,
-    "education_level": education_level[1],
-    "income_category": income_category,
-    "card_usage_period": card_usage_period,
-    "account_cnt": account_cnt,
-    "inactive_month_in_year": inactive_month_in_year[1],
-    "visit_cnt_in_year": visit_cnt_in_year[1],
-    "credit_limit": credit_limit,
-    "revolving_balance": revolving_balance,
-    "avg_remain_credit_limit": avg_remain_credit_limit,
-    "total_amt_change_q4_q1": total_amt_change_q4_q1,
-    "total_trans_amt": total_trans_amt,
-    "total_trans_cnt": total_trans_cnt,
-    "total_cnt_change_q4_q1": total_cnt_change_q4_q1,
-    "avg_utilization_ratio": avg_utilization_ratio,
-    "marital_status": marital_status[1],
-    "card_category": card_category,
-}
+input_data = [
+    {
+        "gender": gender,
+        "education_level": education_level[1],
+        "income_category": income_category,
+        "marital_status": marital_status[1],
+        "card_category": card_category,
+        "age": age,
+        "total_trans_cnt": total_trans_cnt,
+        "dependent_cnt": dependent_cnt,
+        "card_usage_period": card_usage_period,
+        "account_cnt": account_cnt,
+        "inactive_month_in_year": inactive_month_in_year[1],
+        "visit_cnt_in_year": visit_cnt_in_year[1],
+        "credit_limit": credit_limit,
+        "revolving_balance": revolving_balance,
+        "avg_remain_credit_limit": avg_remain_credit_limit,
+        "total_amt_change_q4_q1": total_amt_change_q4_q1,
+        "total_trans_amt": total_trans_amt,
+        "total_cnt_change_q4_q1": total_cnt_change_q4_q1,
+        "avg_utilization_ratio": avg_utilization_ratio,
+    }
+]
 
 if st.button("예측하기"):
-    input_data_df = pd.DataFrame([input_data])
+    processed_columns = [
+        "gender",
+        "education_level",
+        "income_category",
+        "marital_status_Divorced",
+        "marital_status_Married",
+        "marital_status_Single",
+        "card_category_Blue",
+        "card_category_Gold",
+        "card_category_Platinum",
+        "card_category_Silver",
+        "age",
+        "total_trans_cnt",
+        "dependent_cnt",
+        "card_usage_period",
+        "account_cnt",
+        "inactive_month_in_year",
+        "visit_cnt_in_year",
+        "credit_limit",
+        "revolving_balance",
+        "avg_remain_credit_limit",
+        "total_amt_change_q4_q1",
+        "total_trans_amt",
+        "total_cnt_change_q4_q1",
+        "avg_utilization_ratio",
+    ]
 
-    processed_data = preprocessor.preprocess(input_data_df)
+    input_data_df = pd.DataFrame(input_data)
+    processed_data = preprocessor.transform(input_data_df)
+    # processed_data = pd.DataFrame(processed_data, columns=processed_columns)
 
     prediction = None
     prediction_proba = None
