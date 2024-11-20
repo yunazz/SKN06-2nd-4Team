@@ -4,10 +4,6 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder, OrdinalEncoder
 
 # 이상치 처리
-# age, total_trans_coun 전처리에 적용할 transformer 클래스
-## - 정상범위 최대값, 최소값으로 대체
-
-
 class OutlierTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, whis=1.5):
         self.whis = whis
@@ -34,7 +30,6 @@ class ProportionalImputer(BaseEstimator, TransformerMixin):
         self.proportions = {}
 
     def fit(self, X, y=None):
-        # 각 열의 비율을 계산하여 저장
         for column in X.columns:
             counts = X[column].value_counts(normalize=True, dropna=True)
             self.proportions[column] = counts
@@ -60,9 +55,9 @@ class LabelEncoderTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        return self.encoder.transform(X).reshape(-1, 1)  # 1D 배열을 2D로 변환하여 반환
+        return self.encoder.transform(X).reshape(-1, 1)  
 
-
+# 순서 인코딩
 class OrdinalEncoderTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, categories=[]):
         print(categories)
