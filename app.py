@@ -87,9 +87,7 @@ st.markdown('<hr style="margin: 16px 0;"/>', unsafe_allow_html=True)
 col5, col6, col7, col8 = st.columns(4)
 
 with col5:
-    card_category = st.selectbox(
-        "**카드 종류**", ["Blue", "Silver", "Gold", "Platinum"], index=0
-    )
+    card_category = st.selectbox("**카드 종류**", ["Blue", "Silver", "Gold", "Platinum"], index=0)
     visit_cnt_in_year = st.selectbox(
         "**연간 은행 방문 수**",
         [("1회 미만", 0), ("1 ~ 10회", 1), ("11 ~ 20회", 2), ("21 ~ 30회", 3), ("31 ~ 40회", 4), ("41회 이상", 5)],
@@ -97,9 +95,7 @@ with col5:
         index=1,
     )
 with col6:
-    card_usage_period = st.slider(
-        "**카드 사용 기간(개월)**", min_value=1, max_value=60, value=12
-    )
+    card_usage_period = st.slider("**카드 사용 기간(개월)**", min_value=1, max_value=60, value=12)
 with col7:
     account_cnt = st.selectbox("**계좌 수**", range(1, 7), index=0)
 with col8:
@@ -114,44 +110,23 @@ st.markdown('<hr style="margin: 16px 0;"/>', unsafe_allow_html=True)
 
 col9, col10, col11, col12 = st.columns(4)
 with col9:
-    avg_remain_credit_limit = st.slider(
-        "**평균 잔여 신용 한도**", min_value=1500, max_value=35000, value=20000
-    )
-    total_cnt_change_q4_q1 = st.slider(
-        "**총 거래 횟수 변화율(4분기/1분기)**", min_value=0.0, max_value=3.0, value=1.5
-    )
+    avg_remain_credit_limit = st.slider("**평균 잔여 신용 한도**", min_value=1500, max_value=35000, value=20000)
+    total_cnt_change_q4_q1 = st.slider("**총 거래 횟수 변화율(4분기/1분기)**", min_value=0.0, max_value=3.0, value=1.5)
 with col10:
-    total_amt_change_q4_q1 = st.slider(
-        "**연간 거래액 변화율(4분기/1분기)**", min_value=0.0, max_value=3.0, value=1.5
-    )
-    avg_utilization_ratio = st.slider(
-        "**카드 한도 대비 잔액의 비율**", min_value=0.0, max_value=1.0, value=0.5
-    )
+    total_amt_change_q4_q1 = st.slider("**연간 거래액 변화율(4분기/1분기)**", min_value=0.0, max_value=3.0, value=1.5)
+    avg_utilization_ratio = st.slider("**카드 한도 대비 잔액의 비율**", min_value=0.0, max_value=1.0, value=0.5)
 with col11:
-    credit_limit = st.slider(
-        "**신용 한도**", min_value=1500, max_value=35000, value=20000
-    )
-    total_trans_amt = st.slider(
-        "**총 거래 금액**", min_value=8000, max_value=35000, value=20000
-    )
+    credit_limit = st.slider("**신용 한도**", min_value=1500, max_value=35000, value=20000)
+    total_trans_amt = st.slider("**총 거래 금액**", min_value=8000, max_value=35000, value=20000)
 with col12:
-    revolving_balance = st.slider(
-        "**잔금**", min_value=1500, max_value=35000, value=10000
-    )
-    total_trans_cnt = st.slider(
-        "**총 거래 횟수**", min_value=10, max_value=100, value=60
-    )
+    revolving_balance = st.slider("**잔금**", min_value=1500, max_value=35000, value=10000)
+    total_trans_cnt = st.slider("**총 거래 횟수**", min_value=10, max_value=100, value=60)
 
 
 # SIDEBAR - 고객 예측
-st.sidebar.markdown(
-    ST_SIDE_HEADER,
-    unsafe_allow_html=True,
-)
+st.sidebar.markdown(ST_SIDE_HEADER, unsafe_allow_html=True)
 
-model_filter = st.sidebar.selectbox(
-    "", ["XGBoost", "Gradient Boosting", "Random Forest", "Decision Tree"], index=0
-)
+model_filter = st.sidebar.selectbox("", ["XGBoost", "Gradient Boosting", "Random Forest", "Decision Tree"], index=0)
 
 input_data = [
     {
