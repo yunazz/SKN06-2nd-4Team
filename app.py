@@ -1,3 +1,4 @@
+from variables import ST_CSS, ST_TITLE, ST_HEADER, ST_SIDE_HEADER, ST_NEGATIVE, ST_POSITIVE
 import joblib
 import numpy as np
 import pandas as pd
@@ -44,38 +45,12 @@ model_xgb = load_model_xgb()
 # 전처리기 로드
 preprocessor = load_preprocessor()
 
+# 화면구성 START
+st.markdown(ST_CSS, unsafe_allow_html=True)
+st.markdown(ST_TITLE, unsafe_allow_html=True)
+st.markdown(ST_HEADER, unsafe_allow_html=True)
 
-# Front-End 코드
-# 스타일 css
-st.markdown(
-    """
-    <style>
-    .custom-button {background-color: #4CAF50;color: white;padding: 10px 20px;font-size: 16px;border-radius: 5px;border: none;cursor: pointer;}
-    .custom-button:hover {background-color: #45a049;}
-    .stButton {display: flex;justify-content: center;}
-    .stButton button {background-color: #55c9c2;color: white!important;padding: 12px 50px;font-size: 24px;border-radius: 5px;border: none;cursor: pointer;transition: all 0.2s ease;}
-    .stButton button:hover {background-color: #4db5ae!important;color: white;}
-    p.final_prediction {font-size: 42px;text-align: center;font-weight: 800;margin-top: 10px;}
-    p.final_prediction.positive::after,p.final_prediction.negative::after {display: block;text-align:center;font-size: 40px;line-height: 50px;}
-    p.final_prediction.positive::after {margin-top: 16px; content: "고객 유지";}
-    p.final_prediction.negative::after {margin-top: 16px; content: "고객 이탈";}
-    #root > div:nth-child(1) > div.withScreencast > div > div > section.stSidebar.st-emotion-cache-vmpjyt.eczjsme18 > div.st-emotion-cache-6qob1r.eczjsme11 > div.st-emotion-cache-1gwvy71.eczjsme12 > div > div > div > div > div:nth-child(5) > div > div > p {display: block; text-align: center; font-size: 16px; margin-bottom: 8px; }
-    #root > div:nth-child(1) > div.withScreencast > div > div > section.stSidebar.st-emotion-cache-vmpjyt.eczjsme18 > div.st-emotion-cache-6qob1r.eczjsme11 > div.st-emotion-cache-1gwvy71.eczjsme12 > div > div > div > div > div:nth-child(6) > div > div > p {font-size: 13px; text-align: center;color: #999}
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-st.markdown(
-    '<h1 style="text-align: center; margin-bottom: 0">신용카드 이용 고객 이탈 예측</h1>',
-    unsafe_allow_html=True,
-)
-st.markdown(
-    '<hr style="margin: 16px 0 36px; border-color: #ccc; border:2px solid #ddd"/>',
-    unsafe_allow_html=True,
-)
-
-# 고객 정보 입력
+# MAIN - 고객 정보 입력
 st.subheader("📌 고객 정보 입력")
 
 col1, col2, col3, col4 = st.columns(4)
@@ -86,10 +61,7 @@ with col1:
         [
             ("학력 없음", "Uneducated"),
             ("고등학교 재학/졸업", "High School"),
-            (
-                "전문학사 재학/졸업",
-                "College",
-            ),
+            ("전문학사 재학/졸업", "College"),
             ("학사 재학/졸업", "Graduate"),
             ("석사 재학/졸업", "Post-Graduate"),
             ("박사 재학/졸업", "Doctorate"),
@@ -99,11 +71,7 @@ with col1:
     )
 with col2:
     gender = st.selectbox("**성별**", ["M", "F"], index=1)
-    income_category = st.selectbox(
-        "**소득 수준**",
-        ["Less than $40K", "$40K - $60K", "$80K - $120K", "$60K - $80K", "$120K +"],
-        index=2,
-    )
+    income_category = st.selectbox("**소득 수준**", ["Less than $40K", "$40K - $60K", "$80K - $120K", "$60K - $80K", "$120K +"], index=2)
 with col3:
     dependent_cnt = st.selectbox("**부양가족수**", range(0, 7), index=0)
 with col4:
@@ -124,14 +92,7 @@ with col5:
     )
     visit_cnt_in_year = st.selectbox(
         "**연간 은행 방문 수**",
-        [
-            ("1회 미만", 0),
-            ("1 ~ 10회", 1),
-            ("11 ~ 20회", 2),
-            ("21 ~ 30회", 3),
-            ("31 ~ 40회", 4),
-            ("41회 이상", 5),
-        ],
+        [("1회 미만", 0), ("1 ~ 10회", 1), ("11 ~ 20회", 2), ("21 ~ 30회", 3), ("31 ~ 40회", 4), ("41회 이상", 5)],
         format_func=lambda x: x[0],
         index=1,
     )
@@ -144,14 +105,7 @@ with col7:
 with col8:
     inactive_month_in_year = st.selectbox(
         "**연내 계좌 비활성 기간**",
-        [
-            ("15일 미만", 0),
-            ("15일 이상 ~ 1개월 미만", 1),
-            ("1개월 이상 ~ 2개월 미만", 2),
-            ("2개월 ~ 4개월 미만", 3),
-            ("4개월 이상 ~ 6개월 미만", 4),
-            ("6개월 이상", 5),
-        ],
+        [("15일 미만", 0), ("15일 이상 ~ 1개월 미만", 1), ("1개월 이상 ~ 2개월 미만", 2), ("2개월 ~ 4개월 미만", 3), ("4개월 이상 ~ 6개월 미만", 4), ("6개월 이상", 5)],
         format_func=lambda x: x[0],
         index=0,
     )
@@ -185,14 +139,13 @@ with col12:
         "**잔금**", min_value=1500, max_value=35000, value=10000
     )
     total_trans_cnt = st.slider(
-        "**총 거래 횟수 ⭐**", min_value=10, max_value=100, value=60
+        "**총 거래 횟수**", min_value=10, max_value=100, value=60
     )
 
 
-# 고객 예측
-# st.divider()
+# SIDEBAR - 고객 예측
 st.sidebar.markdown(
-    '<h3 style="margin-bottom: 0; transform: translateY(10px)">⚙️ 머신 러닝 모델</h2>',
+    ST_SIDE_HEADER,
     unsafe_allow_html=True,
 )
 
@@ -200,8 +153,6 @@ model_filter = st.sidebar.selectbox(
     "", ["XGBoost", "Gradient Boosting", "Random Forest", "Decision Tree"], index=0
 )
 
-
-# 예측 버튼
 input_data = [
     {
         "gender": gender,
@@ -226,37 +177,10 @@ input_data = [
     }
 ]
 
+# 예측 버튼
 if st.sidebar.button("예측하기"):
-    processed_columns = [
-        "gender",
-        "education_level",
-        "income_category",
-        "marital_status_Divorced",
-        "marital_status_Married",
-        "marital_status_Single",
-        "card_category_Blue",
-        "card_category_Gold",
-        "card_category_Platinum",
-        "card_category_Silver",
-        "age",
-        "total_trans_cnt",
-        "dependent_cnt",
-        "card_usage_period",
-        "account_cnt",
-        "inactive_month_in_year",
-        "visit_cnt_in_year",
-        "credit_limit",
-        "revolving_balance",
-        "avg_remain_credit_limit",
-        "total_amt_change_q4_q1",
-        "total_trans_amt",
-        "total_cnt_change_q4_q1",
-        "avg_utilization_ratio",
-    ]
-
     input_data_df = pd.DataFrame(input_data)
     processed_data = preprocessor.transform(input_data_df)
-    # processed_data = pd.DataFrame(processed_data, columns=processed_columns)
 
     prediction = None
     prediction_proba = None
@@ -283,17 +207,10 @@ if st.sidebar.button("예측하기"):
     final_prediction_txt = "고객 이탈" if final_prediction == 1 else "고객 유지"
 
     if prediction is not None and prediction_proba is not None:
-        # st.markdown('<h2 class="final_prediction" style="text-align: center; margin: 50px 0 0">예측 결과</h2>', unsafe_allow_html=True)
         if final_prediction == 1:
-            st.sidebar.markdown(
-                '<p class="final_prediction negative" style="font-size: 70px;">😭</p>',
-                unsafe_allow_html=True,
-            )
+            st.sidebar.markdown(ST_NEGATIVE, unsafe_allow_html=True)
         else:
-            st.sidebar.markdown(
-                '<p class="final_prediction positive" style="font-size: 70px;">🫶</p>',
-                unsafe_allow_html=True,
-            )
+            st.sidebar.markdown(ST_POSITIVE, unsafe_allow_html=True)
 
         st.sidebar.write(f"이탈 확률: {prediction_proba[0]*100:.2f}%")
         st.sidebar.write("90% 이상일 경우 이탈")

@@ -1,5 +1,5 @@
-
 import pandas as pd
+
 
 def load_dataset():
     # 데이터 load
@@ -21,7 +21,7 @@ def load_dataset():
         "Total_Ct_Chng_Q4_Q1": "total_cnt_change_q4_q1",
     }
     data.rename(columns=rename_columns, inplace=True)
-    # 컬럼명 소문자로 변경
+    # 컬럼명 소문자화
     data.columns = data.columns.str.lower()
 
     ## 컬럼 삭제
@@ -36,7 +36,6 @@ def load_dataset():
 
     X = data.drop(columns="churn")
     y = data["churn"]
-    y = data['churn'].map({"Existing Customer": 0, "Attrited Customer": 1})
-    
+    y = data["churn"].map({"Existing Customer": 0, "Attrited Customer": 1})
 
     return X, y
