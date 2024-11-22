@@ -999,8 +999,6 @@ def evaluate(title, y_real, y_pred, y_prob):
     return score_box
 ```
 
-![image](https://github.com/SKNETWORKS-FAMILY-AICAMP/SKN06-2nd-4Team/blob/main/report/%EC%A0%95%ED%99%95%EB%8F%84.png)
-
 ### ✔️ 최고 성능 모델
 
 🏆 XGBOOST
