@@ -1,6 +1,7 @@
-# SKN06-2nd-4Team
-
-SKN6기 2nd 단위 프로젝트 - 공인용, 김동명, 박유나, 임연경
+# SKN06-1st-6Team
+<div align="center">
+<img width="600" alt="image" src="https://github.com/Jh-jaehyuk/Jh-jaehyuk.github.io/assets/126551524/7ea63fc3-95f0-44d5-a0f0-cf431cae34f1">
+</div>
 
 ## 가디언즈 오브 독산
 
